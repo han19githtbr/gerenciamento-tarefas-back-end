@@ -23,7 +23,7 @@ import com.desafio.service.TarefaService;
 import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/tarefas")

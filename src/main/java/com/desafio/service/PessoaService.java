@@ -25,8 +25,7 @@ public class PessoaService {
 	
 	@Autowired
     private DepartamentoRepository departamentoRepository;
-	
-	
+		
 	public PessoaDTO salvarPessoa(Pessoa pessoa) throws ParseException {
 	    PessoaDTO pessoaDTO = new PessoaDTO();
 	    

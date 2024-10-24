@@ -23,7 +23,7 @@ import com.desafio.view.DepartamentoDTO;
 import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/departamentos")
@@ -34,7 +34,7 @@ public class DepartamentoController {
 	private DepartamentoService departamentoService;
 
 	@PostMapping("/salvarDepartamento")
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = {Exception.class})
 	public DepartamentoDTO salvarDepartamento(@RequestBody Departamento departamento, HttpServletRequest request) throws IOException, ParseException {
 		DepartamentoDTO departamentoDTO = departamentoService.salvarDepartamento(departamento);
 		
@@ -54,14 +54,14 @@ public class DepartamentoController {
 
 
 	@DeleteMapping("/removerDepartamento/{id}")
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = {Exception.class})
 	public DepartamentoDTO removerDepartamento(@PathVariable Long id, HttpServletRequest request) throws IOException {
 		DepartamentoDTO departamentoDTO = departamentoService.removerDepartamento(id);
 		return departamentoDTO;
 	}
 
 	@PutMapping("/alterarDepartamento/{titulo}")
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = {Exception.class})
 	public DepartamentoDTO alterarDepartamento(@PathVariable String titulo, @RequestBody Departamento departamento, HttpServletRequest request) throws IOException {
 		DepartamentoDTO departamentoDTO = departamentoService.alterarDepartamento(titulo, departamento);
 		return departamentoDTO;
@@ -69,7 +69,7 @@ public class DepartamentoController {
 
 
 	@PutMapping("/salvarDepartamentoOrder")
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = {Exception.class})
 	public DepartamentoDTO salvarDepartamentoOrder(@RequestBody List<Departamento> departamentoList) throws ParseException{
 	    DepartamentoDTO departamentoDTO = departamentoService.salvarDepartamentoOrder(departamentoList);
 	    return departamentoDTO;

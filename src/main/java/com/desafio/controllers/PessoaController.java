@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.desafio.model.Pessoa;
 import com.desafio.service.PessoaService;
 import com.desafio.view.PessoaDTO;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/pessoas")
