@@ -17,6 +17,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.desafio.view.PessoaDTO;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
@@ -36,6 +37,7 @@ public class Pessoa {
 
     @ManyToOne
     @JoinColumn(name = "id_departamento")
+    @JsonBackReference("departamento-pessoas")
     private Departamento departamento;
 
     @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL)
@@ -45,18 +47,17 @@ public class Pessoa {
     public long calcularTotalHoras() {
         return getTarefas().stream().mapToLong(Tarefa::getDuracao).sum();
     }
-    
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ordem_apresentacao")
     private Long ordem_apresentacao;
-
 
     public PessoaDTO toDTO() {
         PessoaDTO pessoaDTO = new PessoaDTO();
         pessoaDTO.setId(this.id);
         pessoaDTO.setNome(this.nome);
         pessoaDTO.setDepartamento(this.departamento.getTitulo());
+        pessoaDTO.setDepartamentoId(this.departamento.getId());
         pessoaDTO.setTotalHoras(this.calcularTotalHoras());
         return pessoaDTO;
     }

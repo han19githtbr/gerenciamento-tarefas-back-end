@@ -13,6 +13,8 @@ import javax.persistence.Table;
 
 import com.desafio.view.DepartamentoDTO;
 import com.desafio.view.PessoaDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,25 +25,26 @@ import lombok.NoArgsConstructor;
 @Table(name = "departamento")
 public class Departamento {
 
-	@Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String titulo;
-   
+
     @OneToMany(mappedBy = "departamento", cascade = CascadeType.ALL)
+    @JsonManagedReference("departamento-pessoas")
     private List<Pessoa> pessoas;
-    
+
     @OneToMany(mappedBy = "departamento", cascade = CascadeType.ALL)
+    @JsonManagedReference("departamento-tarefas")
     private List<Tarefa> tarefas;
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ordem_apresentacao")
     private Long ordem_apresentacao;
 
-
     public DepartamentoDTO toDTO() {
-    	DepartamentoDTO departamentoDTO = new DepartamentoDTO();
+        DepartamentoDTO departamentoDTO = new DepartamentoDTO();
         departamentoDTO.setId(this.id);
         departamentoDTO.setTitulo(this.titulo);
         return departamentoDTO;

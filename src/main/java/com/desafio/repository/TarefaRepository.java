@@ -11,28 +11,25 @@ import com.desafio.model.Pessoa;
 import com.desafio.model.Tarefa;
 
 public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
-	
-	@Query("SELECT t FROM Tarefa t " +
-		       "LEFT JOIN t.pessoa p " +
-		       "WHERE p IS NULL " +
-		       "ORDER BY t.prazo ASC")
-	List<Tarefa> findTarefasSemAlocacao(Pageable pageable);
 
+	@Query("SELECT t FROM Tarefa t " +
+			"LEFT JOIN t.pessoa p " +
+			"WHERE p IS NULL " +
+			"ORDER BY t.prazo ASC")
+	List<Tarefa> findTarefasSemAlocacao(Pageable pageable);
 
 	@Query(nativeQuery = true, value = "SELECT * FROM tarefa as t \n" +
 			"where t.titulo = :titulo ")
 	Tarefa checkTituloTarefa(@Param("titulo") String titulo);
 
-
 	@Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY ordem_apresentacao DESC")
 	List<Tarefa> ordemApresentacaoDesc();
 
-	
 	@Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY ordem_apresentacao ASC")
 	List<Tarefa> ordemApresentacaoAsc();
 
-
-	@Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY id ASC")
+	// @Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY id ASC")
+	@Query("SELECT t FROM Tarefa t LEFT JOIN FETCH t.departamento ORDER BY t.id ASC")
 	List<Tarefa> getAllTarefa();
 
 }

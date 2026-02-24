@@ -104,3 +104,8 @@ Link para acessar o endpoint: <a>http://localhost:8090/tarefas/pendentes</a>
 
 10) Listar departamento e quantidade de pessoas e tarefas (get/departamentos)
 Link para acessar o endpoint: <a>http://localhost:8090/departamentos</a>
+
+
+###### Executar o projeto ####################################################
+
+"C:\Program Files\apache-maven-3.9.12\bin\mvn" clean spring-boot:run

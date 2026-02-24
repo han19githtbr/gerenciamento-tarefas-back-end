@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude
 public class TarefaDTO {
 
-	Long id;
+    Long id;
 
     String titulo;
 
@@ -28,15 +28,19 @@ public class TarefaDTO {
 
     String departamento;
 
+    Long departamentoId;
+
+    private Long pessoaId;
+
     Long duracao;
 
     Long ordem_apresentacao;
 
     boolean finalizado;
-    
+
     Pessoa pessoa;
-    
+
     String mensagem;
-    
+
     Boolean success;
 }

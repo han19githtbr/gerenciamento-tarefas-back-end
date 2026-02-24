@@ -31,39 +31,36 @@ import javax.servlet.http.HttpServletRequest;
 public class TarefaController {
 
 	@Autowired
-    private TarefaService tarefaService;
+	private TarefaService tarefaService;
 
 	@PostMapping("/salvarTarefa")
 	@Transactional(rollbackFor = Exception.class)
-	public TarefaDTO salvarTarefa(@RequestBody Tarefa tarefa, HttpServletRequest request) throws IOException, ParseException {
+	public TarefaDTO salvarTarefa(@RequestBody Tarefa tarefa, HttpServletRequest request)
+			throws IOException, ParseException {
 		TarefaDTO tarefaDTO = tarefaService.salvarTarefa(tarefa);
-		
+
 		return tarefaDTO;
 	}
 
-	
 	@GetMapping("/getAllTarefa")
-    public List<TarefaDTO> getAllTarefa() {
-        return tarefaService.getAllTarefa();
-    }
+	public List<TarefaDTO> getAllTarefa() {
+		return tarefaService.getAllTarefa();
+	}
 
+	@PutMapping("/alocar/{tarefaId}/{pessoaId}")
+	public ResponseEntity<TarefaDTO> alocarPessoaNaTarefa(
+			@PathVariable Long tarefaId,
+			@PathVariable Long pessoaId) {
+		TarefaDTO tarefaDTO = tarefaService.alocarPessoaNaTarefa(tarefaId, pessoaId);
+		return ResponseEntity.ok(tarefaDTO);
+	}
 
-    @PutMapping("/alocar/{tarefaId}/{pessoaId}")
-    public TarefaDTO alocarPessoaNaTarefa(
-        @PathVariable Long tarefaId,
-        @PathVariable Long pessoaId) {
-        TarefaDTO tarefaDTO = tarefaService.alocarPessoaNaTarefa(tarefaId, pessoaId);
-        return tarefaDTO;
-    }
-    
-	
-    @PutMapping("/finalizar/{tarefaId}")
-    public TarefaDTO finalizarTarefa(@PathVariable Long tarefaId) {
-        TarefaDTO tarefaDTO = tarefaService.finalizarTarefa(tarefaId);
-        return tarefaDTO;
-    }
-	
-    
+	@PutMapping("/finalizar/{tarefaId}")
+	public TarefaDTO finalizarTarefa(@PathVariable Long tarefaId) {
+		TarefaDTO tarefaDTO = tarefaService.finalizarTarefa(tarefaId);
+		return tarefaDTO;
+	}
+
 	@DeleteMapping("/removerTarefa/{id}")
 	@Transactional(rollbackFor = Exception.class)
 	public TarefaDTO removerTarefa(@PathVariable Long id, HttpServletRequest request) throws IOException {
@@ -71,24 +68,22 @@ public class TarefaController {
 		return tarefaDTO;
 	}
 
-	
-    @GetMapping("/pendentes")
-    public List<TarefaDTO> listarTarefasPendentes() {
-        return tarefaService.listarTarefasPendentes();
-    }
+	@GetMapping("/pendentes")
+	public List<TarefaDTO> listarTarefasPendentes() {
+		return tarefaService.listarTarefasPendentes();
+	}
 
-
-    @PutMapping("/alterarTarefa/{titulo}")
+	@PutMapping("/alterarTarefa/{titulo}")
 	@Transactional(rollbackFor = Exception.class)
-	public TarefaDTO alterarTarefa(@PathVariable String titulo, @RequestBody Tarefa tarefa, HttpServletRequest request) throws IOException {
-    	TarefaDTO tarefaDTO = tarefaService.alterarTarefa(titulo, tarefa);
+	public TarefaDTO alterarTarefa(@PathVariable String titulo, @RequestBody Tarefa tarefa, HttpServletRequest request)
+			throws IOException {
+		TarefaDTO tarefaDTO = tarefaService.alterarTarefa(titulo, tarefa);
 		return tarefaDTO;
 	}
 
-
-    @PutMapping("/salvarTarefaOrder")
+	@PutMapping("/salvarTarefaOrder")
 	@Transactional(rollbackFor = Exception.class)
-	public TarefaDTO salvarTarefaOrder(@RequestBody List<Tarefa> tarefaList) throws ParseException{
+	public TarefaDTO salvarTarefaOrder(@RequestBody List<Tarefa> tarefaList) throws ParseException {
 		TarefaDTO tarefaDTO = tarefaService.salvarTarefaOrder(tarefaList);
 		return tarefaDTO;
 	}

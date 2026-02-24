@@ -16,19 +16,21 @@ import lombok.NoArgsConstructor;
 @JsonInclude
 public class PessoaDTO {
 
-	Long id;
+    Long id;
 
     String nome;
 
     String departamento;
 
+    Long departamentoId;
+
     Long ordem_apresentacao;
-       
+
     List<Tarefa> tarefas;
-	
+
     String mensagem;
-    
+
     Boolean success;
-    
+
     Long totalHoras;
 }
