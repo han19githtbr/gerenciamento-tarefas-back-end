@@ -27,7 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/tarefas")
-@CrossOrigin(origins = { "http://localhost:4200", "http://localhost" }, maxAge = 3600)
+// @CrossOrigin(origins = { "http://localhost:4200", "http://localhost" },
+// maxAge = 3600)
 public class TarefaController {
 
 	@Autowired

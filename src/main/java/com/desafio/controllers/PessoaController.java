@@ -26,47 +26,51 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/pessoas")
-@CrossOrigin(origins = { "http://localhost:4200", "http://localhost" }, maxAge = 3600)
+// @CrossOrigin(origins = { "http://localhost:4200", "http://localhost" },
+// maxAge = 3600)
 public class PessoaController {
 
 	@Autowired
-    private PessoaService pessoaService;
+	private PessoaService pessoaService;
 
 	@PostMapping("/salvarPessoa")
 	@Transactional(rollbackFor = Exception.class)
-	public PessoaDTO salvarPessoa(@RequestBody Pessoa pessoa, HttpServletRequest request) throws IOException, ParseException {
+	public PessoaDTO salvarPessoa(@RequestBody Pessoa pessoa, HttpServletRequest request)
+			throws IOException, ParseException {
 		PessoaDTO pessoaDTO = pessoaService.salvarPessoa(pessoa);
 		return pessoaDTO;
 	}
 
 	@GetMapping("/getAllPessoa")
-    public List<PessoaDTO> getAllPessoa() {
-        return pessoaService.getAllPessoa();
-    }
-	
+	public List<PessoaDTO> getAllPessoa() {
+		return pessoaService.getAllPessoa();
+	}
+
 	@DeleteMapping("/removerPessoa/{id}")
 	@Transactional(rollbackFor = Exception.class)
-	public PessoaDTO removerPessoa(@PathVariable Long id, HttpServletRequest request) throws IOException, ParseException {
+	public PessoaDTO removerPessoa(@PathVariable Long id, HttpServletRequest request)
+			throws IOException, ParseException {
 		PessoaDTO pessoaDTO = pessoaService.removerPessoa(id);
 		return pessoaDTO;
 	}
 
 	@PutMapping("/alterarPessoa/{nome}")
 	@Transactional(rollbackFor = Exception.class)
-	public PessoaDTO alterarPessoa(@PathVariable String nome, @RequestBody Pessoa pessoa, HttpServletRequest request) throws IOException {
+	public PessoaDTO alterarPessoa(@PathVariable String nome, @RequestBody Pessoa pessoa, HttpServletRequest request)
+			throws IOException {
 		PessoaDTO pessoaDTO = pessoaService.alterarPessoa(nome, pessoa);
 		return pessoaDTO;
 	}
-	
+
 	@GetMapping("/gastos")
-    public PessoaDTO buscarPorNome(
-        @RequestParam String nome,
-        @RequestParam String dataCriacao,
-        @RequestParam long duracao) throws IOException {
+	public PessoaDTO buscarPorNome(
+			@RequestParam String nome,
+			@RequestParam String dataCriacao,
+			@RequestParam long duracao) throws IOException {
 
 		LocalDateTime dataCriacaoConvertida = LocalDateTime.parse(dataCriacao, DateTimeFormatter.ISO_DATE_TIME);
 		PessoaDTO pessoaDTO = pessoaService.buscarPorNome(nome, dataCriacaoConvertida, duracao);
 
-        return pessoaDTO;
-    }
+		return pessoaDTO;
+	}
 }
