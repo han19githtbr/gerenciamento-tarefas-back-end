@@ -21,51 +21,50 @@ import com.desafio.view.PessoaDTO;
 public class PessoaService {
 
 	@Autowired
-    private PessoaRepository pessoaRepository;
-	
+	private PessoaRepository pessoaRepository;
+
 	@Autowired
-    private DepartamentoRepository departamentoRepository;
-		
+	private DepartamentoRepository departamentoRepository;
+
 	public PessoaDTO salvarPessoa(Pessoa pessoa) throws ParseException {
-	    PessoaDTO pessoaDTO = new PessoaDTO();
-	    
-	    if (pessoa.getNome() == null || pessoa.getDepartamento() == null || pessoa.getDepartamento().getId() == null) {
-	        pessoaDTO.setSuccess(Boolean.FALSE);
-	        pessoaDTO.setMensagem("O nome e o departamento não podem ser nulos");
-	        return pessoaDTO;
-	    }
-	    
+		PessoaDTO pessoaDTO = new PessoaDTO();
+
+		if (pessoa.getNome() == null || pessoa.getDepartamento() == null || pessoa.getDepartamento().getId() == null) {
+			pessoaDTO.setSuccess(Boolean.FALSE);
+			pessoaDTO.setMensagem("O nome e o departamento não podem ser nulos");
+			return pessoaDTO;
+		}
+
 		if (pessoaRepository.checkNomePessoa(pessoa.getNome()) != null) {
 			pessoaDTO.setSuccess(Boolean.FALSE);
 			pessoaDTO.setMensagem("Já existe uma pessoa com esse nome.");
 			return pessoaDTO;
 		}
 
-	    Departamento departamento = departamentoRepository.findById(pessoa.getDepartamento().getId()).orElse(null);
-	    if (departamento == null) {
-	        pessoaDTO.setSuccess(Boolean.FALSE);
-	        pessoaDTO.setMensagem("Esse departamento não existe");
-	        return pessoaDTO;
-	    }
-	    
+		Departamento departamento = departamentoRepository.findById(pessoa.getDepartamento().getId()).orElse(null);
+		if (departamento == null) {
+			pessoaDTO.setSuccess(Boolean.FALSE);
+			pessoaDTO.setMensagem("Esse departamento não existe");
+			return pessoaDTO;
+		}
+
 		Long nextOrdem = this.nextOrdem();
 
 		pessoa.setOrdem_apresentacao(nextOrdem);
 
-	    pessoaRepository.save(pessoa);
-	    pessoaDTO.setId(pessoa.getId());
+		pessoaRepository.save(pessoa);
+		pessoaDTO.setId(pessoa.getId());
 		pessoaDTO.setNome(pessoa.getNome());
 		pessoaDTO.setOrdem_apresentacao(pessoa.getOrdem_apresentacao());
 		pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salvo(a) com sucesso");
-	    pessoaDTO.setSuccess(Boolean.TRUE);
-	    
-		return pessoaDTO;
-	}	
+		pessoaDTO.setSuccess(Boolean.TRUE);
 
+		return pessoaDTO;
+	}
 
 	private Long nextOrdem() {
 		List<Pessoa> pessoaDTO = pessoaRepository.ordemApresentacaoDesc();
-	
+
 		if (!pessoaDTO.isEmpty() && pessoaDTO.get(0).getOrdem_apresentacao() != null) {
 			Long maiorNumber = pessoaDTO.get(0).getOrdem_apresentacao();
 			return maiorNumber + 1;
@@ -74,11 +73,10 @@ public class PessoaService {
 		}
 	}
 
-
-	public PessoaDTO removerPessoa(Long id) throws ParseException{
+	public PessoaDTO removerPessoa(Long id) throws ParseException {
 		PessoaDTO pessoaDTO = new PessoaDTO();
 		Pessoa pessoa = pessoaRepository.getById(id);
-		if(Objects.nonNull(pessoa)) {
+		if (Objects.nonNull(pessoa)) {
 			pessoaRepository.delete(pessoa);
 			pessoaDTO.setMensagem("A pessoa foi removida com sucesso");
 			pessoaDTO.setSuccess(Boolean.TRUE);
@@ -89,24 +87,23 @@ public class PessoaService {
 		return pessoaDTO;
 	}
 
-	
 	public PessoaDTO alterarPessoa(String nome, Pessoa pessoa) {
 		PessoaDTO pessoaDTO = new PessoaDTO();
 		Pessoa pessoaModel = pessoaRepository.checkNomePessoa(nome);
-		if(Objects.nonNull(pessoaModel)) {
-			if(pessoa.getNome() == null) {
+		if (Objects.nonNull(pessoaModel)) {
+			if (pessoa.getNome() == null) {
 				pessoaDTO.setSuccess(Boolean.FALSE);
 				pessoaDTO.setMensagem("O campo Nome é obrigatório");
 				return pessoaDTO;
 			}
-			
-			if(!nome.equals(pessoa.getNome())) {
+
+			if (!nome.equals(pessoa.getNome())) {
 				Pessoa novaPessoaModel = pessoaRepository.checkNomePessoa(pessoa.getNome());
-				if(Objects.isNull(novaPessoaModel)) {
+				if (Objects.isNull(novaPessoaModel)) {
 					pessoaModel.setNome(pessoa.getNome());
-					
+
 					pessoaRepository.save(pessoaModel);
-					
+
 					pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salva com sucesso.");
 					pessoaDTO.setSuccess(Boolean.TRUE);
 				} else {
@@ -114,76 +111,77 @@ public class PessoaService {
 					pessoaDTO.setMensagem("Já existe uma pessoa com esse nome.");
 					return pessoaDTO;
 				}
-			}else{
+			} else {
 				pessoaModel.setNome(pessoa.getNome());
-				
+
 				pessoaRepository.save(pessoaModel);
-				
+
 				pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salva com sucesso.");
 				pessoaDTO.setSuccess(Boolean.TRUE);
 			}
-			
+
 			pessoaDTO.setId(pessoa.getId());
 			pessoaDTO.setNome(pessoa.getNome());
-			
+
 			return pessoaDTO;
-	
-		}else {
+
+		} else {
 			pessoaDTO.setMensagem("A pessoa não foi editada.");
 			pessoaDTO.setSuccess(Boolean.FALSE);
 			return pessoaDTO;
 		}
 	}
 
-	
-
 	public List<PessoaDTO> getAllPessoa() {
 		List<Pessoa> pessoas = pessoaRepository.getAllPessoa();
-	    List<PessoaDTO> pessoasDTO = new ArrayList<>();
+		List<PessoaDTO> pessoasDTO = new ArrayList<>();
 
-	    for (Pessoa pessoa : pessoas) {
-	        pessoasDTO.add(pessoa.toDTO());
-	    }
+		for (Pessoa pessoa : pessoas) {
+			pessoasDTO.add(pessoa.toDTO());
+		}
 
-	    return pessoasDTO;
+		return pessoasDTO;
 	}
-	
+
+	public long count() {
+		return pessoaRepository.count();
+	}
+
 	public PessoaDTO buscarPorNome(String nome, LocalDateTime dataCriacao, long duracao) {
-	    PessoaDTO pessoaDTO = new PessoaDTO();
-	    List<Pessoa> pessoas = pessoaRepository.findByName(nome);
+		PessoaDTO pessoaDTO = new PessoaDTO();
+		List<Pessoa> pessoas = pessoaRepository.findByName(nome);
 
-	    if (pessoas.isEmpty()) {
-	        pessoaDTO.setMensagem("A pessoa não existe");
-	        pessoaDTO.setSuccess(Boolean.FALSE);
-	        return pessoaDTO;
-	    }
+		if (pessoas.isEmpty()) {
+			pessoaDTO.setMensagem("A pessoa não existe");
+			pessoaDTO.setSuccess(Boolean.FALSE);
+			return pessoaDTO;
+		}
 
-	    List<Tarefa> tarefas = pessoaRepository.findByNameAndPeriod(nome, dataCriacao, duracao);
-	    
-	    if (tarefas.isEmpty()) {
-	        pessoaDTO.setMensagem("A tarefa não existe");
-	        pessoaDTO.setSuccess(Boolean.FALSE);
-	        return pessoaDTO;
-	    }
+		List<Tarefa> tarefas = pessoaRepository.findByNameAndPeriod(nome, dataCriacao, duracao);
 
-	    double mediaHorasPorTarefa = tarefas.stream().mapToLong(Tarefa::getDuracao).average().orElse(0.0);
-	    pessoaDTO.setMensagem("A média de horas gastas por tarefa é: " + mediaHorasPorTarefa);
-	    pessoaDTO.setSuccess(Boolean.TRUE);
-	    return pessoaDTO;
+		if (tarefas.isEmpty()) {
+			pessoaDTO.setMensagem("A tarefa não existe");
+			pessoaDTO.setSuccess(Boolean.FALSE);
+			return pessoaDTO;
+		}
+
+		double mediaHorasPorTarefa = tarefas.stream().mapToLong(Tarefa::getDuracao).average().orElse(0.0);
+		pessoaDTO.setMensagem("A média de horas gastas por tarefa é: " + mediaHorasPorTarefa);
+		pessoaDTO.setSuccess(Boolean.TRUE);
+		return pessoaDTO;
 	}
-
 
 	public PessoaDTO salvarPessoaOrder(List<Pessoa> pessoaList) throws ParseException {
 		PessoaDTO pessoaDTO = new PessoaDTO();
 		try {
-			for(Pessoa itemPessoa : pessoaList) {
+			for (Pessoa itemPessoa : pessoaList) {
 				Pessoa pessoa = pessoaRepository.checkNomePessoa(itemPessoa.getNome());
-				if(!Objects.equals(itemPessoa.getOrdem_apresentacao(), pessoa.getOrdem_apresentacao())) {
+				if (!Objects.equals(itemPessoa.getOrdem_apresentacao(), pessoa.getOrdem_apresentacao())) {
 					pessoa.setOrdem_apresentacao(itemPessoa.getOrdem_apresentacao());
 					pessoaRepository.save(pessoa);
 				}
 			}
-			
+
 			pessoaDTO.setSuccess(Boolean.TRUE);
 			pessoaDTO.setMensagem("A ordem das pessoas foi salva com sucesso.");
 			return pessoaDTO;

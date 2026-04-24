@@ -46,6 +46,8 @@ public class Tarefa {
 
     private boolean finalizado;
 
+    private boolean emAndamento = false;
+
     @ManyToOne
     @JoinColumn(name = "id_pessoa")
     private Pessoa pessoa;
@@ -87,6 +89,7 @@ public class Tarefa {
         }
 
         tarefaDTO.setFinalizado(this.finalizado);
+        tarefaDTO.setEmAndamento(this.emAndamento);
         tarefaDTO.setDuracao(this.getDuracao());
         tarefaDTO.setOrdem_apresentacao(this.ordem_apresentacao);
         return tarefaDTO;

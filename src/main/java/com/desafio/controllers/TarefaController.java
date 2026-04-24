@@ -2,7 +2,9 @@ package com.desafio.controllers;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/tarefas")
@@ -38,9 +41,10 @@ public class TarefaController {
 	@Transactional(rollbackFor = Exception.class)
 	public TarefaDTO salvarTarefa(@RequestBody Tarefa tarefa, HttpServletRequest request)
 			throws IOException, ParseException {
-		TarefaDTO tarefaDTO = tarefaService.salvarTarefa(tarefa);
+		// TarefaDTO tarefaDTO = tarefaService.salvarTarefa(tarefa);
 
-		return tarefaDTO;
+		// return tarefaDTO;
+		return tarefaService.salvarTarefa(tarefa);
 	}
 
 	@GetMapping("/getAllTarefa")
@@ -58,15 +62,17 @@ public class TarefaController {
 
 	@PutMapping("/finalizar/{tarefaId}")
 	public TarefaDTO finalizarTarefa(@PathVariable Long tarefaId) {
-		TarefaDTO tarefaDTO = tarefaService.finalizarTarefa(tarefaId);
-		return tarefaDTO;
+		// TarefaDTO tarefaDTO = tarefaService.finalizarTarefa(tarefaId);
+		// return tarefaDTO;
+		return tarefaService.finalizarTarefa(tarefaId);
 	}
 
 	@DeleteMapping("/removerTarefa/{id}")
 	@Transactional(rollbackFor = Exception.class)
 	public TarefaDTO removerTarefa(@PathVariable Long id, HttpServletRequest request) throws IOException {
-		TarefaDTO tarefaDTO = tarefaService.removerTarefa(id);
-		return tarefaDTO;
+		// TarefaDTO tarefaDTO = tarefaService.removerTarefa(id);
+		// return tarefaDTO;
+		return tarefaService.removerTarefa(id);
 	}
 
 	@GetMapping("/pendentes")
@@ -78,14 +84,29 @@ public class TarefaController {
 	@Transactional(rollbackFor = Exception.class)
 	public TarefaDTO alterarTarefa(@PathVariable String titulo, @RequestBody Tarefa tarefa, HttpServletRequest request)
 			throws IOException {
-		TarefaDTO tarefaDTO = tarefaService.alterarTarefa(titulo, tarefa);
-		return tarefaDTO;
+		// TarefaDTO tarefaDTO = tarefaService.alterarTarefa(titulo, tarefa);
+		// return tarefaDTO;
+		return tarefaService.alterarTarefa(titulo, tarefa);
 	}
 
 	@PutMapping("/salvarTarefaOrder")
 	@Transactional(rollbackFor = Exception.class)
 	public TarefaDTO salvarTarefaOrder(@RequestBody List<Tarefa> tarefaList) throws ParseException {
-		TarefaDTO tarefaDTO = tarefaService.salvarTarefaOrder(tarefaList);
-		return tarefaDTO;
+		// TarefaDTO tarefaDTO = tarefaService.salvarTarefaOrder(tarefaList);
+		// return tarefaDTO;
+		return tarefaService.salvarTarefaOrder(tarefaList);
 	}
+
+	// Feature 1 - Em Andamento
+	@GetMapping("/emAndamento")
+	public List<TarefaDTO> listarTarefasEmAndamento() {
+		return tarefaService.listarTarefasEmAndamento();
+	}
+
+	@GetMapping("/contagemEmAndamento")
+	public Map<String, Long> contagemEmAndamento() {
+		long count = tarefaService.contarTarefasEmAndamento();
+		return Collections.singletonMap("total", count);
+	}
+
 }

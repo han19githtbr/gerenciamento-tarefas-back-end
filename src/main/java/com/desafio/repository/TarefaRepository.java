@@ -1,5 +1,6 @@
 package com.desafio.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
@@ -31,5 +32,32 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 	// @Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY id ASC")
 	@Query("SELECT t FROM Tarefa t LEFT JOIN FETCH t.departamento ORDER BY t.id ASC")
 	List<Tarefa> getAllTarefa();
+
+	// Feature 1 - Em Aandamento
+	@Query("SELECT t FROM Tarefa t WHERE t.pessoa IS NOT NULL AND t.finalizado = false AND t.emAndamento = true")
+	List<Tarefa> findTarefasEmAndamento();
+
+	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NOT NULL AND t.finalizado = false AND t.emAndamento = false")
+	long countTarefasEmAndamento();
+
+	// Feature 2 - Admin dashboard
+	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NULL")
+	long countPendentes();
+
+	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.finalizado = true")
+	long countConcluidas();
+
+	// Feature 3 - Tarefas por pessoa
+	@Query("SELECT t FROM Tarefa t WHERE t.pessoa.id = :pessoaId ORDER BY t.prazo ASC")
+	List<Tarefa> findByPessoaId(@Param("pessoaId") Long pessoaId);
+
+	// Feature 4 - Lembretes
+	@Query("SELECT t FROM Tarefa t " +
+			"WHERE t.prazo = :amanha " +
+			"AND t.finalizado = false " +
+			"AND t.pessoa IS NOT NULL")
+	List<Tarefa> findTarefasParaLembrete(
+			@Param("amanha") LocalDate amanha,
+			@Param("doisDiasAntes") LocalDate doisDiasAntes);
 
 }

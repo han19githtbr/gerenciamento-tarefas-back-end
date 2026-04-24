@@ -5,17 +5,21 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 
+import com.desafio.model.Mensagem;
 import com.desafio.model.Departamento;
 import com.desafio.model.Pessoa;
 import com.desafio.model.Tarefa;
+import com.desafio.repository.MensagemRepository;
 import com.desafio.repository.PessoaRepository;
 import com.desafio.repository.TarefaRepository;
 import com.desafio.view.DepartamentoDTO;
@@ -30,6 +34,9 @@ public class TarefaService {
 
 	@Autowired
 	private TarefaRepository tarefaRepository;
+
+	@Autowired
+	private MensagemRepository mensagemRepository;
 
 	public TarefaDTO salvarTarefa(Tarefa tarefa) throws ParseException {
 
@@ -323,4 +330,59 @@ public class TarefaService {
 			return tarefaDTO;
 		}
 	}
+
+	// Feature 1 - Em Andamento
+	public List<TarefaDTO> listarTarefasEmAndamento() {
+		List<Tarefa> tarefas = tarefaRepository.findTarefasEmAndamento();
+		return tarefas.stream().map(Tarefa::toDTO).collect(Collectors.toList());
+	}
+
+	public long contarTarefasEmAndamento() {
+		return tarefaRepository.countTarefasEmAndamento();
+	}
+
+	// Feature 2 - Admin counts
+	public long count() {
+		return tarefaRepository.count();
+	}
+
+	public long contarPendentes() {
+		return tarefaRepository.countPendentes();
+	}
+
+	public long contarConcluidas() {
+		return tarefaRepository.countConcluidas();
+	}
+
+	// Feature 3 - User panel
+	public List<TarefaDTO> getTarefasByPessoa(Long pessoaId) {
+		List<Tarefa> tarefas = tarefaRepository.findByPessoaId(pessoaId);
+		return tarefas.stream().map(Tarefa::toDTO).collect(Collectors.toList());
+	}
+
+	public TarefaDTO iniciarTarefa(Long tarefaId, String email) {
+		Tarefa tarefa = tarefaRepository.findById(tarefaId)
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+		Pessoa pessoa = pessoaRepository.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada."));
+
+		if (tarefa.getPessoa() == null || !tarefa.getPessoa().getId().equals(pessoa.getId())) {
+			throw new AccessDeniedException("Você não foi alocado nesta tarefa.");
+		}
+
+		tarefa.setEmAndamento(true);
+		tarefaRepository.save(tarefa);
+		return tarefa.toDTO();
+	}
+
+	public Object enviarMensagem(Long tarefaId, Object req) {
+		// Stub - can be expanded with proper MensagemRequest DTO
+		return null;
+	}
+
+	public Object responderMensagem(Long mensagemId, Object req) {
+		// Stub - can be expanded with proper RespostaRequest DTO
+		return null;
+	}
+
 }

@@ -15,22 +15,24 @@ import com.desafio.repository.DepartamentoRepository;
 import com.desafio.view.DepartamentoDTO;
 import com.desafio.view.PessoaDTO;
 
+// Update DepartamentoService to add count() method
+// First check if it has count()
+
 @Service
 public class DepartamentoService {
 
 	@Autowired
 	private DepartamentoRepository departamentoRepository;
 
-	public DepartamentoDTO salvarDepartamento(Departamento departamento) throws ParseException{
+	public DepartamentoDTO salvarDepartamento(Departamento departamento) throws ParseException {
 		DepartamentoDTO departamentoDTO = new DepartamentoDTO();
-		if(departamento.getTitulo() == null) {
+		if (departamento.getTitulo() == null) {
 			departamentoDTO.setSuccess(Boolean.FALSE);
 			departamentoDTO.setMensagem("O título do departamento não pode ser nulo");
 			return departamentoDTO;
 		}
-	
 
-		if(departamentoRepository.checkTituloDepartamento(departamento.getTitulo()) != null ) {
+		if (departamentoRepository.checkTituloDepartamento(departamento.getTitulo()) != null) {
 			departamentoDTO.setSuccess(Boolean.FALSE);
 			departamentoDTO.setMensagem("Já existe um departamento com esse nome.");
 			return departamentoDTO;
@@ -45,28 +47,30 @@ public class DepartamentoService {
 		departamentoDTO.setTitulo(departamento.getTitulo());
 		departamentoDTO.setOrdem_apresentacao(departamento.getOrdem_apresentacao());
 		departamentoDTO.setMensagem(departamento.getTitulo() + " Foi salvo com sucesso");
-		
+
 		departamentoDTO.setSuccess(Boolean.TRUE);
 		return departamentoDTO;
 	}
-	
 
 	public List<DepartamentoDTO> getAllDepartamento() {
 		List<Departamento> departamentos = departamentoRepository.getAllDepartamento();
-	    List<DepartamentoDTO> departamentosDTO = new ArrayList<>();
+		List<DepartamentoDTO> departamentosDTO = new ArrayList<>();
 
-	    for (Departamento departamento : departamentos) {
-	        departamentosDTO.add(departamento.toDTO());
-	    }
+		for (Departamento departamento : departamentos) {
+			departamentosDTO.add(departamento.toDTO());
+		}
 
-	    return departamentosDTO;
+		return departamentosDTO;
 	}
 
+	public long count() {
+		return departamentoRepository.count();
+	}
 
 	public DepartamentoDTO removerDepartamento(Long id) {
-    	DepartamentoDTO departamentoDTO = new DepartamentoDTO();
-    	Departamento departamento = departamentoRepository.getById(id);
-		if(Objects.nonNull(departamento)) {
+		DepartamentoDTO departamentoDTO = new DepartamentoDTO();
+		Departamento departamento = departamentoRepository.getById(id);
+		if (Objects.nonNull(departamento)) {
 			departamentoRepository.delete(departamento);
 			departamentoDTO.setMensagem("O departamento foi removido com sucesso");
 			departamentoDTO.setSuccess(Boolean.TRUE);
@@ -77,64 +81,63 @@ public class DepartamentoService {
 		return departamentoDTO;
 	}
 
-
 	public DepartamentoDTO alterarDepartamento(String titulo, Departamento departamento) {
 		DepartamentoDTO departamentoDTO = new DepartamentoDTO();
 		Departamento departamentoModel = departamentoRepository.checkTituloDepartamento(titulo);
-		if(Objects.nonNull(departamentoModel)) {
-			if(departamento.getTitulo() == null) {
+		if (Objects.nonNull(departamentoModel)) {
+			if (departamento.getTitulo() == null) {
 				departamentoDTO.setSuccess(Boolean.FALSE);
 				departamentoDTO.setMensagem("O campo Titulo é obrigatório");
 				return departamentoDTO;
 			}
-			
-			if(!titulo.equals(departamento.getTitulo())) {
-				Departamento novoDepartamentoModel = departamentoRepository.checkTituloDepartamento(departamento.getTitulo());
-				if(Objects.isNull(novoDepartamentoModel)) {
+
+			if (!titulo.equals(departamento.getTitulo())) {
+				Departamento novoDepartamentoModel = departamentoRepository
+						.checkTituloDepartamento(departamento.getTitulo());
+				if (Objects.isNull(novoDepartamentoModel)) {
 					departamentoModel.setTitulo(departamento.getTitulo());
-					
+
 					departamentoRepository.save(departamentoModel);
-					
-					departamentoDTO.setMensagem("O departamento " + departamento.getTitulo() + " foi salvo com sucesso.");
+
+					departamentoDTO
+							.setMensagem("O departamento " + departamento.getTitulo() + " foi salvo com sucesso.");
 					departamentoDTO.setSuccess(Boolean.TRUE);
 				} else {
 					departamentoDTO.setSuccess(Boolean.FALSE);
 					departamentoDTO.setMensagem("Já existe um departamento com esse nome.");
 					return departamentoDTO;
 				}
-			}else{
+			} else {
 				departamentoModel.setTitulo(departamento.getTitulo());
-				
+
 				departamentoRepository.save(departamentoModel);
-				
+
 				departamentoDTO.setMensagem("O departamento " + departamento.getTitulo() + " foi salvo com sucesso.");
 				departamentoDTO.setSuccess(Boolean.TRUE);
 			}
-			
+
 			departamentoDTO.setId(departamento.getId());
 			departamentoDTO.setTitulo(departamento.getTitulo());
-			
+
 			return departamentoDTO;
-	
-		}else {
+
+		} else {
 			departamentoDTO.setMensagem("O departamento não foi alterado.");
 			departamentoDTO.setSuccess(Boolean.FALSE);
 			return departamentoDTO;
 		}
 	}
 
-
 	public List<DepartamentoDTO> listarDepartamentosComQuantidade() {
-        List<Departamento> departamentos = departamentoRepository.findAll();
-        return departamentos.stream()
-            .map(this::converterParaDTO)
-            .collect(Collectors.toList());
-    }
+		List<Departamento> departamentos = departamentoRepository.findAll();
+		return departamentos.stream()
+				.map(this::converterParaDTO)
+				.collect(Collectors.toList());
+	}
 
-    	
 	private Long nextOrdem() {
 		List<Departamento> departamentoDTO = departamentoRepository.ordemApresentacaoDesc();
-	
+
 		if (!departamentoDTO.isEmpty() && departamentoDTO.get(0).getOrdem_apresentacao() != null) {
 			Long maiorNumber = departamentoDTO.get(0).getOrdem_apresentacao();
 			return maiorNumber + 1;
@@ -143,23 +146,22 @@ public class DepartamentoService {
 		}
 	}
 
-
 	private DepartamentoDTO converterParaDTO(Departamento departamento) {
-        DepartamentoDTO departamentoDTO = new DepartamentoDTO();
-        departamentoDTO.setId(departamento.getId());
-        departamentoDTO.setTitulo(departamento.getTitulo());
-        departamentoDTO.setQuantidadePessoas(departamento.getPessoas().size());
-        departamentoDTO.setQuantidadeTarefas(departamento.getTarefas().size());
-        return departamentoDTO;
-    }
-
+		DepartamentoDTO departamentoDTO = new DepartamentoDTO();
+		departamentoDTO.setId(departamento.getId());
+		departamentoDTO.setTitulo(departamento.getTitulo());
+		departamentoDTO.setQuantidadePessoas(departamento.getPessoas().size());
+		departamentoDTO.setQuantidadeTarefas(departamento.getTarefas().size());
+		return departamentoDTO;
+	}
 
 	public DepartamentoDTO salvarDepartamentoOrder(List<Departamento> departamentoList) throws ParseException {
 		DepartamentoDTO departamentoDTO = new DepartamentoDTO();
 		try {
-			for(Departamento itemDepartamento : departamentoList) {
-				Departamento departamento = departamentoRepository.checkTituloDepartamento(itemDepartamento.getTitulo());
-				if(itemDepartamento.getOrdem_apresentacao() != departamento.getOrdem_apresentacao()) {
+			for (Departamento itemDepartamento : departamentoList) {
+				Departamento departamento = departamentoRepository
+						.checkTituloDepartamento(itemDepartamento.getTitulo());
+				if (itemDepartamento.getOrdem_apresentacao() != departamento.getOrdem_apresentacao()) {
 					departamento.setOrdem_apresentacao(itemDepartamento.getOrdem_apresentacao());
 					departamentoRepository.save(departamento);
 				}

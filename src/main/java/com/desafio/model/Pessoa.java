@@ -35,6 +35,9 @@ public class Pessoa {
 
     private String nome;
 
+    @Column(unique = true)
+    private String email;
+
     @ManyToOne
     @JoinColumn(name = "id_departamento")
     @JsonBackReference("departamento-pessoas")
