@@ -53,11 +53,11 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 
 	// Feature 4 - Lembretes
 	@Query("SELECT t FROM Tarefa t " +
-			"WHERE t.prazo = :amanha " +
+			"WHERE (t.prazo = :amanha OR t.prazo = :doisDiasAtras) " +
 			"AND t.finalizado = false " +
 			"AND t.pessoa IS NOT NULL")
 	List<Tarefa> findTarefasParaLembrete(
 			@Param("amanha") LocalDate amanha,
-			@Param("doisDiasAntes") LocalDate doisDiasAntes);
+			@Param("doisDiasAtras") LocalDate doisDiasAtras);
 
 }
