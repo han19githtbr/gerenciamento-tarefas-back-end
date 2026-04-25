@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -375,14 +376,52 @@ public class TarefaService {
 		return tarefa.toDTO();
 	}
 
-	public Object enviarMensagem(Long tarefaId, Object req) {
-		// Stub - can be expanded with proper MensagemRequest DTO
-		return null;
+	public Object enviarMensagem(Long tarefaId, String remetenteEmail, String texto) {
+		Tarefa tarefa = tarefaRepository.findById(tarefaId)
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+
+		Mensagem mensagem = new Mensagem();
+		mensagem.setTarefa(tarefa);
+		mensagem.setRemetenteEmail(remetenteEmail);
+		mensagem.setTexto(texto);
+		mensagem.setDataCriacao(LocalDateTime.now());
+		mensagem.setRespondida(false);
+
+		mensagemRepository.save(mensagem);
+
+		return java.util.Map.of(
+				"id", mensagem.getId(),
+				"tarefaId", tarefaId,
+				"remetenteEmail", remetenteEmail,
+				"texto", texto,
+				"dataCriacao", mensagem.getDataCriacao().toString(),
+				"respondida", false);
 	}
 
-	public Object responderMensagem(Long mensagemId, Object req) {
-		// Stub - can be expanded with proper RespostaRequest DTO
-		return null;
+	public Object responderMensagem(Long mensagemId, String adminEmail, String resposta) {
+		Mensagem mensagem = mensagemRepository.findById(mensagemId)
+				.orElseThrow(() -> new EntityNotFoundException("Mensagem n\u00e3o encontrada."));
+
+		if (mensagem.isRespondida()) {
+			throw new IllegalStateException("Esta mensagem j\u00e1 foi respondida.");
+		}
+
+		mensagem.setResposta(resposta);
+		mensagem.setAdminEmail(adminEmail);
+		mensagem.setDataResposta(LocalDateTime.now());
+		mensagem.setRespondida(true);
+
+		mensagemRepository.save(mensagem);
+
+		return Map.of(
+				"id", mensagem.getId(),
+				"tarefaId", mensagem.getTarefa().getId(),
+				"remetenteEmail", mensagem.getRemetenteEmail(),
+				"texto", mensagem.getTexto(),
+				"resposta", resposta,
+				"adminEmail", adminEmail,
+				"dataResposta", mensagem.getDataResposta().toString(),
+				"respondida", true);
 	}
 
 }
