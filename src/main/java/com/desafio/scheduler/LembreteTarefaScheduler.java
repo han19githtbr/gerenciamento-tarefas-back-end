@@ -24,15 +24,15 @@ public class LembreteTarefaScheduler {
     @Scheduled(fixedRate = 7200000)
     public void enviarLembretes() {
         LocalDate amanha = LocalDate.now().plusDays(1);
-        LocalDate doisDiasAtras = LocalDate.now().minusDays(2);
 
-        List<Tarefa> tarefas = tarefaRepository.findTarefasParaLembrete(amanha, doisDiasAtras);
+        // Busca tarefas cujo prazo é amanhã, não finalizadas e com pessoa alocada
+        List<Tarefa> tarefas = tarefaRepository.findTarefasParaLembrete(amanha);
 
         for (Tarefa tarefa : tarefas) {
             if (tarefa.getPessoa() != null && tarefa.getPessoa().getEmail() != null) {
                 String email = tarefa.getPessoa().getEmail();
                 notificacaoService.criarNotificacao(email, tarefa.getId(),
-                        "Lembrete: A tarefa '" + tarefa.getTitulo() + "' vence amanhã! Prazo: " + tarefa.getPrazo());
+                        "⏰ Lembrete: A tarefa '" + tarefa.getTitulo() + "' vence amanhã! Prazo: " + tarefa.getPrazo());
             }
         }
     }

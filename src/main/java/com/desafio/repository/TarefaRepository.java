@@ -37,11 +37,12 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 	@Query("SELECT t FROM Tarefa t WHERE t.pessoa IS NOT NULL AND t.finalizado = false AND t.emAndamento = true")
 	List<Tarefa> findTarefasEmAndamento();
 
-	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NOT NULL AND t.finalizado = false AND t.emAndamento = false")
+	// BUGFIX: era emAndamento = false (invertido). Corrigido para true.
+	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NOT NULL AND t.finalizado = false AND t.emAndamento = true")
 	long countTarefasEmAndamento();
 
 	// Feature 2 - Admin dashboard
-	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NULL")
+	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NULL AND t.finalizado = false")
 	long countPendentes();
 
 	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.finalizado = true")
@@ -51,13 +52,13 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 	@Query("SELECT t FROM Tarefa t WHERE t.pessoa.id = :pessoaId ORDER BY t.prazo ASC")
 	List<Tarefa> findByPessoaId(@Param("pessoaId") Long pessoaId);
 
-	// Feature 4 - Lembretes
+	// Feature 4 - Lembretes: prazo é amanhã, tarefa não finalizada, pessoa alocada
+	// Não envia se a tarefa foi concluída (finalizado=false já garante isso)
 	@Query("SELECT t FROM Tarefa t " +
-			"WHERE (t.prazo = :amanha OR t.prazo = :doisDiasAtras) " +
+			"WHERE t.prazo = :amanha " +
 			"AND t.finalizado = false " +
 			"AND t.pessoa IS NOT NULL")
 	List<Tarefa> findTarefasParaLembrete(
-			@Param("amanha") LocalDate amanha,
-			@Param("doisDiasAtras") LocalDate doisDiasAtras);
+			@Param("amanha") LocalDate amanha);
 
 }
