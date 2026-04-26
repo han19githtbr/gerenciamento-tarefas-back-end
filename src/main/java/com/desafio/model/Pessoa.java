@@ -59,6 +59,7 @@ public class Pessoa {
         PessoaDTO pessoaDTO = new PessoaDTO();
         pessoaDTO.setId(this.id);
         pessoaDTO.setNome(this.nome);
+        pessoaDTO.setEmail(this.email);
         pessoaDTO.setDepartamento(this.departamento.getTitulo());
         pessoaDTO.setDepartamentoId(this.departamento.getId());
         pessoaDTO.setTotalHoras(this.calcularTotalHoras());

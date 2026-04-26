@@ -20,6 +20,8 @@ public class PessoaDTO {
 
     String nome;
 
+    String email;
+
     String departamento;
 
     Long departamentoId;

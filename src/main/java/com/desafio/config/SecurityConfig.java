@@ -37,11 +37,18 @@ public class SecurityConfig {
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
                 .csrf().disable()
-                .authorizeRequests()
-                .antMatchers("/admin/**").hasRole("ADMIN")
-                .antMatchers("/usuario/**").hasAnyRole("USER", "ADMIN")
-                .anyRequest().authenticated()
-                .and()
+                .authorizeRequests(auth -> auth
+                        .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .antMatchers("/admin/**").hasRole("ADMIN")
+                        .antMatchers("/usuario/**").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(
+                                "/tarefas/getAllTarefa",
+                                "/tarefas/pendentes",
+                                "/pessoas/getAllPessoa",
+                                "/departamentos/getAllDepartamento",
+                                "/departamentos")
+                        .hasAnyRole("USER", "ADMIN")
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer()
                 .jwt()
                 .jwtAuthenticationConverter(jwtAuthenticationConverter());

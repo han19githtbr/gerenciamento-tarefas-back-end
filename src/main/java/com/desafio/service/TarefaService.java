@@ -93,7 +93,7 @@ public class TarefaService {
 		}
 	}
 
-	public TarefaDTO alocarPessoaNaTarefa(Long tarefaId, Long pessoaId) {
+	public TarefaDTO alocarPessoaNaTarefa(Long tarefaId, Long pessoaId, String emailPessoa) {
 		// ADICIONE LOGS PARA DEBUG - isso ajudará a identificar o problema
 		System.out.println("=== INÍCIO ALOCAÇÃO ===");
 		System.out.println("Tarefa ID: " + tarefaId);
@@ -165,6 +165,12 @@ public class TarefaService {
 
 		tarefa.setPessoa(pessoa);
 		tarefa.setEmAndamento(true);
+
+		if (emailPessoa != null && !emailPessoa.isBlank()) {
+			pessoa.setEmail(emailPessoa);
+			pessoaRepository.save(pessoa);
+		}
+
 		tarefaRepository.save(tarefa);
 
 		System.out.println("SUCESSO: Pessoa alocada na tarefa");

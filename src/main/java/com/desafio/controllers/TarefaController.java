@@ -55,8 +55,11 @@ public class TarefaController {
 	@PutMapping("/alocar/{tarefaId}/{pessoaId}")
 	public ResponseEntity<TarefaDTO> alocarPessoaNaTarefa(
 			@PathVariable Long tarefaId,
-			@PathVariable Long pessoaId) {
-		TarefaDTO tarefaDTO = tarefaService.alocarPessoaNaTarefa(tarefaId, pessoaId);
+			@PathVariable Long pessoaId,
+			@RequestBody(required = false) Map<String, String> body) { // ← ADICIONAR body
+
+		String emailPessoa = (body != null) ? body.get("emailPessoa") : null;
+		TarefaDTO tarefaDTO = tarefaService.alocarPessoaNaTarefa(tarefaId, pessoaId, emailPessoa);
 		return ResponseEntity.ok(tarefaDTO);
 	}
 

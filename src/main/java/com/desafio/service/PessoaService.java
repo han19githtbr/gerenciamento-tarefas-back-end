@@ -55,6 +55,7 @@ public class PessoaService {
 		pessoaRepository.save(pessoa);
 		pessoaDTO.setId(pessoa.getId());
 		pessoaDTO.setNome(pessoa.getNome());
+		pessoaDTO.setEmail(pessoa.getEmail());
 		pessoaDTO.setOrdem_apresentacao(pessoa.getOrdem_apresentacao());
 		pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salvo(a) com sucesso");
 		pessoaDTO.setSuccess(Boolean.TRUE);
