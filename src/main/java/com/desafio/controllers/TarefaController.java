@@ -30,8 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/tarefas")
-// @CrossOrigin(origins = { "http://localhost:4200", "http://localhost" },
-// maxAge = 3600)
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class TarefaController {
 
 	@Autowired

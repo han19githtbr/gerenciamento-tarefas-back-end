@@ -14,21 +14,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.desafio.model.Departamento;
-import com.desafio.model.Pessoa;
 import com.desafio.service.DepartamentoService;
 import com.desafio.view.DepartamentoDTO;
-import com.desafio.view.PessoaDTO;
-import com.desafio.view.TarefaDTO;
 
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/departamentos")
-// @CrossOrigin(origins = { "http://localhost:4200", "http://localhost" },
-// maxAge = 3600)
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
+		RequestMethod.DELETE, RequestMethod.OPTIONS })
 public class DepartamentoController {
 
 	@Autowired
@@ -36,11 +34,10 @@ public class DepartamentoController {
 
 	@PostMapping(value = "/salvarDepartamento", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
-	public DepartamentoDTO salvarDepartamento(@RequestBody Departamento departamento, HttpServletRequest request)
-			throws IOException, ParseException {
-		DepartamentoDTO departamentoDTO = departamentoService.salvarDepartamento(departamento);
-
-		return departamentoDTO;
+	public DepartamentoDTO salvarDepartamento(
+			@RequestBody Departamento departamento,
+			HttpServletRequest request) throws IOException, ParseException {
+		return departamentoService.salvarDepartamento(departamento);
 	}
 
 	@GetMapping
@@ -55,25 +52,25 @@ public class DepartamentoController {
 
 	@DeleteMapping("/removerDepartamento/{id}")
 	@Transactional(rollbackFor = { Exception.class })
-	public DepartamentoDTO removerDepartamento(@PathVariable Long id, HttpServletRequest request) throws IOException {
-		DepartamentoDTO departamentoDTO = departamentoService.removerDepartamento(id);
-		return departamentoDTO;
+	public DepartamentoDTO removerDepartamento(
+			@PathVariable Long id,
+			HttpServletRequest request) throws IOException {
+		return departamentoService.removerDepartamento(id);
 	}
 
 	@PutMapping(value = "/alterarDepartamento/{titulo}", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
-	public DepartamentoDTO alterarDepartamento(@PathVariable String titulo, @RequestBody Departamento departamento,
+	public DepartamentoDTO alterarDepartamento(
+			@PathVariable String titulo,
+			@RequestBody Departamento departamento,
 			HttpServletRequest request) throws IOException {
-		DepartamentoDTO departamentoDTO = departamentoService.alterarDepartamento(titulo, departamento);
-		return departamentoDTO;
+		return departamentoService.alterarDepartamento(titulo, departamento);
 	}
 
 	@PutMapping("/salvarDepartamentoOrder")
 	@Transactional(rollbackFor = { Exception.class })
-	public DepartamentoDTO salvarDepartamentoOrder(@RequestBody List<Departamento> departamentoList)
-			throws ParseException {
-		DepartamentoDTO departamentoDTO = departamentoService.salvarDepartamentoOrder(departamentoList);
-		return departamentoDTO;
+	public DepartamentoDTO salvarDepartamentoOrder(
+			@RequestBody List<Departamento> departamentoList) throws ParseException {
+		return departamentoService.salvarDepartamentoOrder(departamentoList);
 	}
-
 }

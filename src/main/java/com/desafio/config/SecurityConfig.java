@@ -9,13 +9,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -39,23 +39,13 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeRequests(auth -> auth
-                        // Preflight OPTIONS sempre livre
                         .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Rotas exclusivas do admin
                         .antMatchers("/admin/**").hasRole("ADMIN")
-
-                        // Rotas de usuário
                         .antMatchers("/usuario/**").hasAnyRole("USER", "ADMIN")
-
-                        // ✅ TODAS as rotas de departamentos liberadas para USER e ADMIN
                         .antMatchers("/departamentos/**").hasAnyRole("USER", "ADMIN")
-
-                        // ✅ TODAS as rotas de tarefas e pessoas liberadas para USER e ADMIN
                         .antMatchers("/tarefas/**").hasAnyRole("USER", "ADMIN")
                         .antMatchers("/pessoas/**").hasAnyRole("USER", "ADMIN")
-
-                        // Qualquer outra rota requer autenticação
+                        .antMatchers("/notificacoes/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer()
                 .jwt()
@@ -67,18 +57,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        // ✅ Lista explícita de headers permitidos (não confiar só em "*" com Spring
-        // Security)
-        config.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"));
+        // setAllowedOriginPatterns aceita "*" e funciona mesmo com Spring Security
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(false);
         config.setMaxAge(3600L);
