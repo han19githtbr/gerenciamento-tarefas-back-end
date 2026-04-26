@@ -34,7 +34,7 @@ public class DepartamentoController {
 	@Autowired
 	private DepartamentoService departamentoService;
 
-	@PostMapping("/salvarDepartamento")
+	@PostMapping(value = "/salvarDepartamento", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO salvarDepartamento(@RequestBody Departamento departamento, HttpServletRequest request)
 			throws IOException, ParseException {
@@ -60,7 +60,7 @@ public class DepartamentoController {
 		return departamentoDTO;
 	}
 
-	@PutMapping("/alterarDepartamento/{titulo}")
+	@PutMapping(value = "/alterarDepartamento/{titulo}", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO alterarDepartamento(@PathVariable String titulo, @RequestBody Departamento departamento,
 			HttpServletRequest request) throws IOException {
