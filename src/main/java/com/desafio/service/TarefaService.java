@@ -1,6 +1,7 @@
 package com.desafio.service;
 
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,6 +164,7 @@ public class TarefaService {
 		tarefa.setDataCriacao(LocalDateTime.now());
 
 		tarefa.setPessoa(pessoa);
+		tarefa.setEmAndamento(true);
 		tarefaRepository.save(tarefa);
 
 		System.out.println("SUCESSO: Pessoa alocada na tarefa");
@@ -204,12 +206,16 @@ public class TarefaService {
 		}
 
 		tarefa.setFinalizado(true);
-		tarefa.setDuracao(tarefa.getDuracao());
+		tarefa.setEmAndamento(false);
+		// FIX: salva a data de conclusão para verificação do lembrete "2 dias antes"
+		tarefa.setDataConclusao(LocalDate.now());
 		tarefaRepository.save(tarefa);
+
 		tarefaDTO.setDuracao(tarefa.getDuracao());
 		tarefaDTO.setFinalizado(true);
+		tarefaDTO.setEmAndamento(false);
 		tarefaDTO.setSuccess(Boolean.TRUE);
-
+		tarefaDTO.setMensagem("Tarefa finalizada com sucesso.");
 		return tarefaDTO;
 	}
 

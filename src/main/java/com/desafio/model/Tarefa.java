@@ -3,20 +3,25 @@ package com.desafio.model;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -55,14 +60,26 @@ public class Tarefa {
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;
 
+    @Column(name = "data_conclusao")
+    private LocalDate dataConclusao;
+
     @Transient
     public long getDuracao() {
+        if (dataCriacao == null)
+            return 0;
         return Duration.between(dataCriacao, LocalDateTime.now()).toHours();
     }
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ordem_apresentacao")
     private Long ordem_apresentacao;
+
+    /**
+     * Relacionamento com mensagens da tarefa (dúvidas do usuário).
+     */
+    @OneToMany(mappedBy = "tarefa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference("tarefa-mensagens")
+    private List<Mensagem> mensagens;
 
     public TarefaDTO toDTO() {
         TarefaDTO tarefaDTO = new TarefaDTO();
@@ -92,6 +109,24 @@ public class Tarefa {
         tarefaDTO.setEmAndamento(this.emAndamento);
         tarefaDTO.setDuracao(this.getDuracao());
         tarefaDTO.setOrdem_apresentacao(this.ordem_apresentacao);
+
+        // Inclui mensagens no DTO para o painel do usuário
+        if (this.mensagens != null) {
+            tarefaDTO.setMensagens(this.mensagens.stream()
+                    .map(m -> {
+                        java.util.Map<String, Object> msgMap = new java.util.LinkedHashMap<>();
+                        msgMap.put("id", m.getId());
+                        msgMap.put("texto", m.getTexto());
+                        msgMap.put("remetenteEmail", m.getRemetenteEmail());
+                        msgMap.put("dataCriacao", m.getDataCriacao() != null ? m.getDataCriacao().toString() : null);
+                        msgMap.put("respondida", m.isRespondida());
+                        msgMap.put("resposta", m.getResposta());
+                        msgMap.put("dataResposta", m.getDataResposta() != null ? m.getDataResposta().toString() : null);
+                        return msgMap;
+                    })
+                    .collect(java.util.stream.Collectors.toList()));
+        }
+
         return tarefaDTO;
     }
 
