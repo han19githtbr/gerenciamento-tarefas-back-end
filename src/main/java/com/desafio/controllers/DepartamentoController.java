@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.desafio.model.Departamento;
@@ -25,31 +23,32 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/departamentos")
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
-		RequestMethod.DELETE, RequestMethod.OPTIONS })
+// CORS handled globally by SecurityConfig.corsConfigurationSource()
+// Removido @CrossOrigin para evitar conflito com o filtro CORS do Spring
+// Security
 public class DepartamentoController {
 
 	@Autowired
 	private DepartamentoService departamentoService;
 
-	@PostMapping(value = "/salvarDepartamento", produces = "application/json")
+	@PostMapping(value = "/salvarDepartamento", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO salvarDepartamento(
 			@RequestBody Departamento departamento) throws IOException, ParseException {
 		return departamentoService.salvarDepartamento(departamento);
 	}
 
-	@GetMapping
+	@GetMapping(produces = "application/json")
 	public List<DepartamentoDTO> listarDepartamentosComQuantidade() {
 		return departamentoService.listarDepartamentosComQuantidade();
 	}
 
-	@GetMapping("/getAllDepartamento")
+	@GetMapping(value = "/getAllDepartamento", produces = "application/json")
 	public List<DepartamentoDTO> getAllDepartamento() {
 		return departamentoService.getAllDepartamento();
 	}
 
-	@DeleteMapping("/removerDepartamento/{id}")
+	@DeleteMapping(value = "/removerDepartamento/{id}", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO removerDepartamento(
 			@PathVariable Long id,
@@ -57,7 +56,7 @@ public class DepartamentoController {
 		return departamentoService.removerDepartamento(id);
 	}
 
-	@PutMapping(value = "/alterarDepartamento/{titulo}", produces = "application/json")
+	@PutMapping(value = "/alterarDepartamento/{titulo}", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO alterarDepartamento(
 			@PathVariable String titulo,
@@ -65,7 +64,7 @@ public class DepartamentoController {
 		return departamentoService.alterarDepartamento(titulo, departamento);
 	}
 
-	@PutMapping("/salvarDepartamentoOrder")
+	@PutMapping(value = "/salvarDepartamentoOrder", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO salvarDepartamentoOrder(
 			@RequestBody List<Departamento> departamentoList) throws ParseException {

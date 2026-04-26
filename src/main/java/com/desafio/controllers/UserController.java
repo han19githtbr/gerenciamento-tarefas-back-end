@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.desafio.model.Pessoa;
@@ -25,7 +24,6 @@ import com.desafio.service.TarefaService;
 import com.desafio.view.TarefaDTO;
 
 @RestController
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/usuario")
 @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
 
