@@ -14,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,20 +39,28 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeRequests(auth -> auth
+                        // Preflight OPTIONS sempre livre
                         .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Rotas exclusivas do admin
                         .antMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Rotas de usuário
                         .antMatchers("/usuario/**").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(
-                                "/tarefas/getAllTarefa",
-                                "/tarefas/pendentes",
-                                "/pessoas/getAllPessoa",
-                                "/departamentos/getAllDepartamento",
-                                "/departamentos")
-                        .hasAnyRole("USER", "ADMIN")
+
+                        // ✅ TODAS as rotas de departamentos liberadas para USER e ADMIN
+                        .antMatchers("/departamentos/**").hasAnyRole("USER", "ADMIN")
+
+                        // ✅ TODAS as rotas de tarefas e pessoas liberadas para USER e ADMIN
+                        .antMatchers("/tarefas/**").hasAnyRole("USER", "ADMIN")
+                        .antMatchers("/pessoas/**").hasAnyRole("USER", "ADMIN")
+
+                        // Qualquer outra rota requer autenticação
                         .anyRequest().authenticated())
                 .oauth2ResourceServer()
                 .jwt()
                 .jwtAuthenticationConverter(jwtAuthenticationConverter());
+
         return http.build();
     }
 
@@ -59,10 +68,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // ✅ Lista explícita de headers permitidos (não confiar só em "*" com Spring
+        // Security)
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"));
+        config.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(false);
         config.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
@@ -78,19 +98,15 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
-        converter.setAuthoritiesClaimName("email");
-        converter.setAuthorityPrefix("");
-
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
         jwtConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
             String email = jwt.getClaimAsString("email");
             if (adminEmail.equals(email)) {
-                return java.util.List.of(
+                return List.of(
                         new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"),
                         new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"));
             }
-            return java.util.List.of(
+            return List.of(
                     new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"));
         });
         return jwtConverter;
