@@ -32,11 +32,10 @@ public class DepartamentoController {
 	@Autowired
 	private DepartamentoService departamentoService;
 
-	@PostMapping(value = "/salvarDepartamento", consumes = "application/json", produces = "application/json")
+	@PostMapping(value = "/salvarDepartamento", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO salvarDepartamento(
-			@RequestBody Departamento departamento,
-			HttpServletRequest request) throws IOException, ParseException {
+			@RequestBody Departamento departamento) throws IOException, ParseException {
 		return departamentoService.salvarDepartamento(departamento);
 	}
 
@@ -58,12 +57,11 @@ public class DepartamentoController {
 		return departamentoService.removerDepartamento(id);
 	}
 
-	@PutMapping(value = "/alterarDepartamento/{titulo}", consumes = "application/json", produces = "application/json")
+	@PutMapping(value = "/alterarDepartamento/{titulo}", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })
 	public DepartamentoDTO alterarDepartamento(
 			@PathVariable String titulo,
-			@RequestBody Departamento departamento,
-			HttpServletRequest request) throws IOException {
+			@RequestBody Departamento departamento) throws IOException {
 		return departamentoService.alterarDepartamento(titulo, departamento);
 	}
 
