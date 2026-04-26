@@ -10,4 +10,5 @@ public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
 
     List<Mensagem> findByTarefaId(Long tarefaId);
 
+    List<Mensagem> findByRespondidaFalse(); // ← ADICIONAR
 }

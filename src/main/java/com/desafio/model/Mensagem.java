@@ -8,6 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,7 @@ public class Mensagem {
 
     @ManyToOne
     @JoinColumn(name = "id_tarefa")
+    @JsonBackReference("tarefa-mensagens")
     private Tarefa tarefa;
 
     private String remetenteEmail;

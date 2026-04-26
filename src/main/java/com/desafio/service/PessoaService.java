@@ -144,6 +144,15 @@ public class PessoaService {
 		return pessoasDTO;
 	}
 
+	public List<PessoaDTO> getPessoasPorDepartamento(Long departamentoId) {
+		List<Pessoa> pessoas = pessoaRepository.findByDepartamentoId(departamentoId);
+		List<PessoaDTO> pessoasDTO = new ArrayList<>();
+		for (Pessoa pessoa : pessoas) {
+			pessoasDTO.add(pessoa.toDTO());
+		}
+		return pessoasDTO;
+	}
+
 	public long count() {
 		return pessoaRepository.count();
 	}
