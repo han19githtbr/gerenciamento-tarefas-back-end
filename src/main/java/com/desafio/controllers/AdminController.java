@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -83,6 +84,15 @@ public class AdminController {
         result.put("pendentes", tarefaService.contarPendentes());
         result.put("concluidas", tarefaService.contarConcluidas());
         return result;
+    }
+
+    @DeleteMapping("/mensagem/{mensagemId}")
+    public ResponseEntity<?> excluirMensagem(@PathVariable Long mensagemId) {
+        if (!mensagemRepository.existsById(mensagemId)) {
+            return ResponseEntity.notFound().build();
+        }
+        mensagemRepository.deleteById(mensagemId);
+        return ResponseEntity.ok(Map.of("excluido", true));
     }
 
 }

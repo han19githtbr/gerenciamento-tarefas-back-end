@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,7 @@ import com.desafio.model.Tarefa;
 import com.desafio.repository.PessoaRepository;
 import com.desafio.service.TarefaService;
 import com.desafio.view.TarefaDTO;
+import com.desafio.repository.MensagemRepository;
 
 @RestController
 @RequestMapping("/usuario")
@@ -34,6 +36,9 @@ public class UserController {
 
     @Autowired
     private PessoaRepository pessoaRepository;
+
+    @Autowired
+    private MensagemRepository mensagemRepository;
 
     // Busca tarefas do usuário logado pelo email
     @GetMapping("/minhas-tarefas")
@@ -64,6 +69,22 @@ public class UserController {
     public TarefaDTO iniciarTarefa(@PathVariable Long tarefaId, Authentication auth) {
         String email = auth.getName();
         return tarefaService.iniciarTarefa(tarefaId, email);
+    }
+
+    @DeleteMapping("/mensagem/{msgId}")
+    public ResponseEntity<?> excluirMensagem(
+            @PathVariable Long msgId,
+            Authentication auth) {
+        String email = auth.getName();
+        com.desafio.model.Mensagem mensagem = mensagemRepository.findById(msgId)
+                .orElse(null);
+        if (mensagem == null)
+            return ResponseEntity.notFound().build();
+        if (!mensagem.getRemetenteEmail().equals(email)) {
+            return ResponseEntity.status(403).body(Map.of("erro", "Sem permissão para excluir esta mensagem."));
+        }
+        mensagemRepository.deleteById(msgId);
+        return ResponseEntity.ok(Map.of("excluido", true));
     }
 
 }
