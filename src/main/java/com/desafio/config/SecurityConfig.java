@@ -81,6 +81,9 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
+
+        jwtConverter.setPrincipalClaimName("email");
+
         jwtConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
             String email = jwt.getClaimAsString("email");
             if (adminEmail.equals(email)) {
