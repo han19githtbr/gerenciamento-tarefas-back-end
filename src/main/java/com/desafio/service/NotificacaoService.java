@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.desafio.model.Notificacao;
@@ -15,13 +16,23 @@ public class NotificacaoService {
     @Autowired
     private NotificacaoRepository notificacaoRepository;
 
+    // ← NOVO: lê o email do admin do application.properties
+    @Value("${admin.email}")
+    private String adminEmail;
+
     public void criarNotificacao(String email, Long tarefaId, String msg) {
         Notificacao n = new Notificacao();
         n.setDestinatarioEmail(email);
+        n.setTarefaId(tarefaId);
         n.setMensagem(msg);
         n.setLida(false);
         n.setDataCriacao(LocalDateTime.now());
         notificacaoRepository.save(n);
+    }
+
+    // ← NOVO: cria notificação especificamente para o admin
+    public void criarNotificacaoParaAdmin(Long tarefaId, String msg) {
+        criarNotificacao(adminEmail, tarefaId, msg);
     }
 
     public List<Notificacao> getNotificacoesPendentes(String email) {
@@ -33,7 +44,5 @@ public class NotificacaoService {
             n.setLida(true);
             notificacaoRepository.save(n);
         });
-
     }
-
 }

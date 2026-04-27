@@ -27,6 +27,7 @@ import com.desafio.repository.TarefaRepository;
 import com.desafio.view.DepartamentoDTO;
 import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
+import com.desafio.service.NotificacaoService;
 
 @Service
 public class TarefaService {
@@ -39,6 +40,9 @@ public class TarefaService {
 
 	@Autowired
 	private MensagemRepository mensagemRepository;
+
+	@Autowired
+	private NotificacaoService notificacaoService;
 
 	public TarefaDTO salvarTarefa(Tarefa tarefa) throws ParseException {
 
@@ -400,6 +404,11 @@ public class TarefaService {
 		mensagem.setRespondida(false);
 
 		mensagemRepository.save(mensagem);
+
+		// ← NOVO: notifica o admin sobre a nova mensagem
+		notificacaoService.criarNotificacaoParaAdmin(
+				tarefaId,
+				"Nova mensagem de " + remetenteEmail + " na tarefa \"" + tarefa.getTitulo() + "\"");
 
 		return java.util.Map.of(
 				"id", mensagem.getId(),
