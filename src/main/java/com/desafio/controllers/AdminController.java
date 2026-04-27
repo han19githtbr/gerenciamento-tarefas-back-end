@@ -3,9 +3,6 @@ package com.desafio.controllers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.desafio.repository.MensagemRepository;
-import com.desafio.model.Mensagem;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
