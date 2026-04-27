@@ -60,8 +60,15 @@ public class UserController {
         if (texto == null || texto.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("erro", "O campo 'texto' é obrigatório."));
         }
-        Object resultado = tarefaService.enviarMensagem(id, email, texto);
-        return ResponseEntity.ok(resultado);
+        try {
+            Object resultado = tarefaService.enviarMensagem(id, email, texto);
+            return ResponseEntity.ok(resultado);
+        } catch (javax.persistence.EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(Map.of("erro", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar mensagem: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("erro", "Erro interno ao enviar mensagem."));
+        }
     }
 
     // Usuário inicia uma tarefa (muda status para em andamento)
