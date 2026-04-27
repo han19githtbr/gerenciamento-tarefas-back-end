@@ -3,6 +3,9 @@ package com.desafio.controllers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.desafio.repository.MensagemRepository;
+import com.desafio.model.Mensagem;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -55,8 +58,21 @@ public class AdminController {
 
     // ← ADICIONAR ESTE ENDPOINT
     @GetMapping("/mensagens/pendentes")
-    public List<Mensagem> getMensagensPendentes() {
-        return mensagemRepository.findByRespondidaFalse();
+    public List<Map<String, Object>> getMensagensPendentes() {
+        List<Mensagem> mensagens = mensagemRepository.findByRespondidaFalse();
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Mensagem m : mensagens) {
+            Map<String, Object> dto = new java.util.LinkedHashMap<>();
+            dto.put("id", m.getId());
+            dto.put("remetenteEmail", m.getRemetenteEmail());
+            dto.put("texto", m.getTexto());
+            dto.put("dataCriacao", m.getDataCriacao());
+            dto.put("respondida", m.isRespondida());
+            dto.put("tarefaId", m.getTarefa() != null ? m.getTarefa().getId() : null);
+            dto.put("tarefaTitulo", m.getTarefa() != null ? m.getTarefa().getTitulo() : null);
+            result.add(dto);
+        }
+        return result;
     }
 
     // Endpoint existente — sem alteração
@@ -71,4 +87,5 @@ public class AdminController {
         result.put("concluidas", tarefaService.contarConcluidas());
         return result;
     }
+
 }
