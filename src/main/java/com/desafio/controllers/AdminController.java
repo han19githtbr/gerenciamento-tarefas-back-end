@@ -1,6 +1,7 @@
 package com.desafio.controllers;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.desafio.model.Tarefa;
+import com.desafio.model.Mensagem;
+import com.desafio.repository.MensagemRepository;
 import com.desafio.service.DepartamentoService;
 import com.desafio.service.PessoaService;
 import com.desafio.service.TarefaService;
@@ -22,7 +24,6 @@ import com.desafio.service.TarefaService;
 @RestController
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
-
 public class AdminController {
 
     @Autowired
@@ -34,7 +35,10 @@ public class AdminController {
     @Autowired
     private DepartamentoService departamentoService;
 
-    // Admin responde mensagem de um usuário em uma tarefa
+    @Autowired
+    private MensagemRepository mensagemRepository; // ← ADICIONAR
+
+    // Endpoint existente — sem alteração
     @PutMapping("/mensagem/{mensagemId}/responder")
     public ResponseEntity<?> responderMensagem(
             @PathVariable Long mensagemId,
@@ -43,12 +47,19 @@ public class AdminController {
         String adminEmail = auth.getName();
         String resposta = body.get("resposta");
         if (resposta == null || resposta.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("erro", "O campo \'resposta\' é obrigatório."));
+            return ResponseEntity.badRequest().body(Map.of("erro", "O campo 'resposta' é obrigatório."));
         }
         Object resultado = tarefaService.responderMensagem(mensagemId, adminEmail, resposta);
         return ResponseEntity.ok(resultado);
     }
 
+    // ← ADICIONAR ESTE ENDPOINT
+    @GetMapping("/mensagens/pendentes")
+    public List<Mensagem> getMensagensPendentes() {
+        return mensagemRepository.findByRespondidaFalse();
+    }
+
+    // Endpoint existente — sem alteração
     @GetMapping("/dashboard")
     public Map<String, Object> getDashboardData() {
         Map<String, Object> result = new HashMap<>();
@@ -60,5 +71,4 @@ public class AdminController {
         result.put("concluidas", tarefaService.contarConcluidas());
         return result;
     }
-
 }
