@@ -22,22 +22,21 @@ import com.desafio.service.DepartamentoService;
 import com.desafio.service.PessoaService;
 import com.desafio.service.TarefaService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AdminController {
 
-    @Autowired
-    private TarefaService tarefaService;
+    private final TarefaService tarefaService;
 
-    @Autowired
-    private PessoaService pessoaService;
+    private final PessoaService pessoaService;
 
-    @Autowired
-    private DepartamentoService departamentoService;
+    private final DepartamentoService departamentoService;
 
-    @Autowired
-    private MensagemRepository mensagemRepository; // ← ADICIONAR
+    private final MensagemRepository mensagemRepository; // ← ADICIONAR
 
     // Endpoint existente — sem alteração
     @PutMapping("/mensagem/{mensagemId}/responder")

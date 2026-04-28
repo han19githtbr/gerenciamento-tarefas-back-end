@@ -14,14 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.desafio.model.Notificacao;
 import com.desafio.service.NotificacaoService;
 
-@RestController
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/notificacoes")
+import lombok.RequiredArgsConstructor;
 
+@RestController
+// @CrossOrigin(origins = "*", allowedHeaders = "*")
+@RequestMapping("/notificacoes")
+@RequiredArgsConstructor
 public class NotificacaoController {
 
-    @Autowired
-    private NotificacaoService notificacaoService;
+    private final NotificacaoService notificacaoService;
 
     @GetMapping("/pendentes")
     public List<Notificacao> getPendentes(Authentication auth) {

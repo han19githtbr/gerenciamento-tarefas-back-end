@@ -23,22 +23,22 @@ import com.desafio.model.Tarefa;
 import com.desafio.repository.PessoaRepository;
 import com.desafio.service.TarefaService;
 import com.desafio.view.TarefaDTO;
+
+import lombok.RequiredArgsConstructor;
+
 import com.desafio.repository.MensagemRepository;
 
 @RestController
 @RequestMapping("/usuario")
 @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private TarefaService tarefaService;
+    private final TarefaService tarefaService;
 
-    @Autowired
-    private PessoaRepository pessoaRepository;
+    private final PessoaRepository pessoaRepository;
 
-    @Autowired
-    private MensagemRepository mensagemRepository;
+    private final MensagemRepository mensagemRepository;
 
     // Busca tarefas do usuário logado pelo email
     @GetMapping("/minhas-tarefas")

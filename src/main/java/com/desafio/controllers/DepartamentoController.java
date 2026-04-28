@@ -19,6 +19,8 @@ import com.desafio.model.Departamento;
 import com.desafio.service.DepartamentoService;
 import com.desafio.view.DepartamentoDTO;
 
+import lombok.RequiredArgsConstructor;
+
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
@@ -26,10 +28,10 @@ import javax.servlet.http.HttpServletRequest;
 // CORS handled globally by SecurityConfig.corsConfigurationSource()
 // Removido @CrossOrigin para evitar conflito com o filtro CORS do Spring
 // Security
+@RequiredArgsConstructor
 public class DepartamentoController {
 
-	@Autowired
-	private DepartamentoService departamentoService;
+	private final DepartamentoService departamentoService;
 
 	@PostMapping(value = "/salvarDepartamento", consumes = "application/json", produces = "application/json")
 	@Transactional(rollbackFor = { Exception.class })

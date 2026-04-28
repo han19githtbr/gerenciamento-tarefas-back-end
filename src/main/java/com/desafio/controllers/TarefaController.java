@@ -24,15 +24,17 @@ import com.desafio.service.TarefaService;
 import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 
+import lombok.RequiredArgsConstructor;
+
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/tarefas")
+@RequiredArgsConstructor
 public class TarefaController {
 
-	@Autowired
-	private TarefaService tarefaService;
+	private final TarefaService tarefaService;
 
 	@PostMapping("/salvarTarefa")
 	@Transactional(rollbackFor = Exception.class)

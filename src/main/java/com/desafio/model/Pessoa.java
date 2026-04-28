@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Index;
 import javax.persistence.Table;
 
 import com.desafio.view.PessoaDTO;
@@ -26,7 +27,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "pessoa")
+@Table(name = "pessoa", indexes = {
+        @Index(name = "idx_pessoa_email", columnList = "email"),
+        @Index(name = "idx_pessoa_nome", columnList = "nome")
+})
 public class Pessoa {
 
     @Id

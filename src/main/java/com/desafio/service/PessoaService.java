@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import com.desafio.model.Departamento;
@@ -17,14 +18,15 @@ import com.desafio.repository.PessoaRepository;
 import com.desafio.view.DepartamentoDTO;
 import com.desafio.view.PessoaDTO;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class PessoaService {
 
-	@Autowired
-	private PessoaRepository pessoaRepository;
+	private final PessoaRepository pessoaRepository;
 
-	@Autowired
-	private DepartamentoRepository departamentoRepository;
+	private final DepartamentoRepository departamentoRepository;
 
 	public PessoaDTO salvarPessoa(Pessoa pessoa) throws ParseException {
 		PessoaDTO pessoaDTO = new PessoaDTO();
@@ -133,6 +135,7 @@ public class PessoaService {
 		}
 	}
 
+	@Transactional(readOnly = true)
 	public List<PessoaDTO> getAllPessoa() {
 		List<Pessoa> pessoas = pessoaRepository.getAllPessoa();
 		List<PessoaDTO> pessoasDTO = new ArrayList<>();
@@ -144,6 +147,7 @@ public class PessoaService {
 		return pessoasDTO;
 	}
 
+	@Transactional(readOnly = true)
 	public List<PessoaDTO> getPessoasPorDepartamento(Long departamentoId) {
 		List<Pessoa> pessoas = pessoaRepository.findByDepartamentoId(departamentoId);
 		List<PessoaDTO> pessoasDTO = new ArrayList<>();
@@ -153,6 +157,7 @@ public class PessoaService {
 		return pessoasDTO;
 	}
 
+	@Transactional(readOnly = true)
 	public long count() {
 		return pessoaRepository.count();
 	}

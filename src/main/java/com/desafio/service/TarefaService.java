@@ -9,9 +9,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -29,25 +32,25 @@ import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 import com.desafio.service.NotificacaoService;
 
+import lombok.RequiredArgsConstructor;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class TarefaService {
 
-	@Autowired
-	private PessoaRepository pessoaRepository;
+	private final PessoaRepository pessoaRepository;
 
-	@Autowired
-	private TarefaRepository tarefaRepository;
+	private final TarefaRepository tarefaRepository;
 
-	@Autowired
-	private MensagemRepository mensagemRepository;
+	private final MensagemRepository mensagemRepository;
 
-	@Autowired
-	private NotificacaoService notificacaoService;
+	private final NotificacaoService notificacaoService;
 
 	public TarefaDTO salvarTarefa(Tarefa tarefa) throws ParseException {
 
-		System.out.println("Salvando tarefa: " + tarefa.getTitulo());
-		System.out.println(
+		log.info("Salvando tarefa: " + tarefa.getTitulo());
+		log.info(
 				"Departamento: " + (tarefa.getDepartamento() != null ? tarefa.getDepartamento().getTitulo() : "NULL"));
 
 		tarefa.setDataCriacao(LocalDateTime.now());
@@ -99,45 +102,45 @@ public class TarefaService {
 
 	public TarefaDTO alocarPessoaNaTarefa(Long tarefaId, Long pessoaId, String emailPessoa) {
 		// ADICIONE LOGS PARA DEBUG - isso ajudará a identificar o problema
-		System.out.println("=== INÍCIO ALOCAÇÃO ===");
-		System.out.println("Tarefa ID: " + tarefaId);
-		System.out.println("Pessoa ID: " + pessoaId);
+		log.info("=== INÍCIO ALOCAÇÃO ===");
+		log.info("Tarefa ID: " + tarefaId);
+		log.info("Pessoa ID: " + pessoaId);
 
 		Tarefa tarefa = tarefaRepository.findById(tarefaId)
 				.orElseThrow(() -> {
-					System.out.println("ERRO: Tarefa não encontrada com ID: " + tarefaId);
+					log.error("ERRO: Tarefa não encontrada com ID: " + tarefaId);
 					return new EntityNotFoundException("Tarefa não encontrada.");
 				});
 		Pessoa pessoa = pessoaRepository.findById(pessoaId)
 				.orElseThrow(() -> {
-					System.out.println("ERRO: Pessoa não encontrada com ID: " + pessoaId);
+					log.error("ERRO: Pessoa não encontrada com ID: " + pessoaId);
 					return new EntityNotFoundException("Pessoa não encontrada.");
 				});
 
 		TarefaDTO tarefaDTO = new TarefaDTO();
 
 		// LOGS DE DEBUG
-		System.out.println("Tarefa encontrada: " + tarefa.getTitulo());
-		System.out.println("Pessoa encontrada: " + pessoa.getNome());
-		System.out.println("Tarefa Departamento: " +
+		log.info("Tarefa encontrada: " + tarefa.getTitulo());
+		log.info("Pessoa encontrada: " + pessoa.getNome());
+		log.info("Tarefa Departamento: " +
 				(tarefa.getDepartamento() != null
 						? tarefa.getDepartamento().getId() + " - " + tarefa.getDepartamento().getTitulo()
 						: "NULL"));
-		System.out.println("Pessoa Departamento: " +
+		log.info("Pessoa Departamento: " +
 				(pessoa.getDepartamento() != null
 						? pessoa.getDepartamento().getId() + " - " + pessoa.getDepartamento().getTitulo()
 						: "NULL"));
 
 		// Verificação mais robusta de departamentos
 		if (tarefa.getDepartamento() == null) {
-			System.out.println("ERRO: Tarefa não possui departamento");
+			log.error("ERRO: Tarefa não possui departamento");
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("A tarefa não possui departamento.");
 			return tarefaDTO;
 		}
 
 		if (pessoa.getDepartamento() == null) {
-			System.out.println("ERRO: Pessoa não possui departamento");
+			log.error("ERRO: Pessoa não possui departamento");
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("A pessoa não possui departamento.");
 			return tarefaDTO;
@@ -147,10 +150,10 @@ public class TarefaService {
 		Long tarefaDeptId = tarefa.getDepartamento().getId();
 		Long pessoaDeptId = pessoa.getDepartamento().getId();
 
-		System.out.println("Comparando departamentos: Tarefa=" + tarefaDeptId + ", Pessoa=" + pessoaDeptId);
+		log.info("Comparando departamentos: Tarefa=" + tarefaDeptId + ", Pessoa=" + pessoaDeptId);
 
 		if (!tarefaDeptId.equals(pessoaDeptId)) {
-			System.out.println("ERRO: Departamentos diferentes");
+			log.error("ERRO: Departamentos diferentes");
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("A pessoa não pertence ao mesmo departamento da tarefa.");
 			return tarefaDTO;
@@ -158,7 +161,7 @@ public class TarefaService {
 
 		// Verificar se a tarefa já está finalizada
 		if (tarefa.isFinalizado()) {
-			System.out.println("ERRO: Tarefa já finalizada");
+			log.error("ERRO: Tarefa já finalizada");
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("Não é possível alocar pessoa em tarefa finalizada.");
 			return tarefaDTO;
@@ -177,7 +180,7 @@ public class TarefaService {
 
 		tarefaRepository.save(tarefa);
 
-		System.out.println("SUCESSO: Pessoa alocada na tarefa");
+		log.info("SUCESSO: Pessoa alocada na tarefa");
 
 		tarefaDTO.setSuccess(Boolean.TRUE);
 		tarefaDTO.setMensagem("A pessoa foi alocada com sucesso");
@@ -193,6 +196,7 @@ public class TarefaService {
 		return tarefaDTO;
 	}
 
+	@Transactional(readOnly = true)
 	public List<TarefaDTO> getAllTarefa() {
 		List<Tarefa> tarefas = tarefaRepository.getAllTarefa();
 		List<TarefaDTO> tarefasDTO = new ArrayList<>();
@@ -248,6 +252,7 @@ public class TarefaService {
 		Tarefa tarefaModel = tarefaRepository.checkTituloTarefa(titulo);
 		if (Objects.nonNull(tarefaModel)) {
 			if (tarefa.getTitulo() == null) {
+				log.error("ERRO: O campo Titulo é obrigatório");
 				tarefaDTO.setSuccess(Boolean.FALSE);
 				tarefaDTO.setMensagem("O campo Titulo é obrigatório");
 				return tarefaDTO;
@@ -304,6 +309,7 @@ public class TarefaService {
 		}
 	}
 
+	@Transactional(readOnly = true)
 	public List<TarefaDTO> listarTarefasPendentes() {
 		List<TarefaDTO> tarefasPendentes = new ArrayList<>();
 		Pageable pageable = PageRequest.of(0, 3);
@@ -349,29 +355,35 @@ public class TarefaService {
 	}
 
 	// Feature 1 - Em Andamento
+	@Transactional(readOnly = true)
 	public List<TarefaDTO> listarTarefasEmAndamento() {
 		List<Tarefa> tarefas = tarefaRepository.findTarefasEmAndamento();
 		return tarefas.stream().map(Tarefa::toDTO).collect(Collectors.toList());
 	}
 
+	@Transactional(readOnly = true)
 	public long contarTarefasEmAndamento() {
 		return tarefaRepository.countTarefasEmAndamento();
 	}
 
-	// Feature 2 - Admin counts
+	@Transactional(readOnly = true) // Feature 2 - Admin counts
 	public long count() {
 		return tarefaRepository.count();
 	}
 
+	@Transactional(readOnly = true)
 	public long contarPendentes() {
 		return tarefaRepository.countPendentes();
 	}
 
+	@Transactional(readOnly = true)
 	public long contarConcluidas() {
 		return tarefaRepository.countConcluidas();
 	}
 
 	// Feature 3 - User panel
+
+	@Transactional(readOnly = true)
 	public List<TarefaDTO> getTarefasByPessoa(Long pessoaId) {
 		List<Tarefa> tarefas = tarefaRepository.findByPessoaId(pessoaId);
 		return tarefas.stream().map(Tarefa::toDTO).collect(Collectors.toList());

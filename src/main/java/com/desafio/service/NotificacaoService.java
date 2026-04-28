@@ -4,17 +4,20 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 
 import com.desafio.model.Notificacao;
 import com.desafio.repository.NotificacaoRepository;
 
 @Service
+@RequiredArgsConstructor
 public class NotificacaoService {
 
-    @Autowired
-    private NotificacaoRepository notificacaoRepository;
+    private final NotificacaoRepository notificacaoRepository;
 
     // ← NOVO: lê o email do admin do application.properties
     @Value("${admin.email}")
@@ -35,6 +38,7 @@ public class NotificacaoService {
         criarNotificacao(adminEmail, tarefaId, msg);
     }
 
+    @Transactional(readOnly = true)
     public List<Notificacao> getNotificacoesPendentes(String email) {
         return notificacaoRepository.findByDestinatarioEmailAndLidaFalse(email);
     }

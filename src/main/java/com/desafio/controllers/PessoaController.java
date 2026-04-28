@@ -13,14 +13,17 @@ import org.springframework.web.bind.annotation.*;
 import com.desafio.model.Pessoa;
 import com.desafio.service.PessoaService;
 import com.desafio.view.PessoaDTO;
+
+import lombok.RequiredArgsConstructor;
+
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/pessoas")
+@RequiredArgsConstructor
 public class PessoaController {
 
-	@Autowired
-	private PessoaService pessoaService;
+	private final PessoaService pessoaService;
 
 	@PostMapping("/salvarPessoa")
 	@Transactional(rollbackFor = Exception.class)

@@ -7,7 +7,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 
 import com.desafio.model.Departamento;
 import com.desafio.model.Pessoa;
@@ -19,10 +22,10 @@ import com.desafio.view.PessoaDTO;
 // First check if it has count()
 
 @Service
+@RequiredArgsConstructor
 public class DepartamentoService {
 
-	@Autowired
-	private DepartamentoRepository departamentoRepository;
+	private final DepartamentoRepository departamentoRepository;
 
 	public DepartamentoDTO salvarDepartamento(Departamento departamento) throws ParseException {
 		DepartamentoDTO departamentoDTO = new DepartamentoDTO();
@@ -52,6 +55,7 @@ public class DepartamentoService {
 		return departamentoDTO;
 	}
 
+	@Transactional(readOnly = true)
 	public List<DepartamentoDTO> getAllDepartamento() {
 		List<Departamento> departamentos = departamentoRepository.getAllDepartamento();
 		List<DepartamentoDTO> departamentosDTO = new ArrayList<>();
@@ -63,6 +67,7 @@ public class DepartamentoService {
 		return departamentosDTO;
 	}
 
+	@Transactional(readOnly = true)
 	public long count() {
 		return departamentoRepository.count();
 	}
@@ -128,6 +133,7 @@ public class DepartamentoService {
 		}
 	}
 
+	@Transactional(readOnly = true)
 	public List<DepartamentoDTO> listarDepartamentosComQuantidade() {
 		List<Departamento> departamentos = departamentoRepository.findAll();
 		return departamentos.stream()
