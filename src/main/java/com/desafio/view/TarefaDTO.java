@@ -32,5 +32,7 @@ public class TarefaDTO {
 
     // USANDO Map (compatível com seu código existente)
     private List<Map<String, Object>> mensagens;
+    private List<Map<String, Object>> pessoasAlocadas;
+    private boolean vencida;
 
 }
