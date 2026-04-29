@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import javax.persistence.EntityNotFoundException;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,5 +26,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<?> handleIllegal(IllegalStateException ex) {
         return ResponseEntity.status(409).body(Map.of("erro", ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleGeneric(Exception ex) {
+        log.error("Erro inesperado na API", ex);
+        return ResponseEntity.status(500).body(Map.of(
+                "mensagem", "Erro interno no servidor.",
+                "detalhe", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
     }
 }

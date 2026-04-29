@@ -76,7 +76,7 @@ public class TarefaService {
 			return tarefaDTO;
 		}
 
-		if (tarefaRepository.checkTituloTarefa(tarefa.getTitulo()) != null) {
+		if (tarefaRepository.existsByTituloIgnoreCase(tarefa.getTitulo())) {
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("Já existe uma tarefa com esse nome.");
 			return tarefaDTO;

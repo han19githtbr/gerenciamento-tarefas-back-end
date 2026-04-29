@@ -23,6 +23,8 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 			"where t.titulo = :titulo ")
 	Tarefa checkTituloTarefa(@Param("titulo") String titulo);
 
+	boolean existsByTituloIgnoreCase(String titulo);
+
 	@Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY ordem_apresentacao DESC")
 	List<Tarefa> ordemApresentacaoDesc();
 
