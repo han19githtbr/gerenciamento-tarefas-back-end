@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -53,6 +54,8 @@ public class Tarefa {
 
     private boolean emAndamento = false;
 
+    private boolean notificacaoVencimentoEnviada = false;
+
     @ManyToOne
     @JoinColumn(name = "id_pessoa")
     private Pessoa pessoa;
@@ -80,6 +83,14 @@ public class Tarefa {
     @OneToMany(mappedBy = "tarefa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference("tarefa-mensagens")
     private List<Mensagem> mensagens;
+
+    @OneToMany(mappedBy = "tarefa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TarefaAlocacao> alocacoes = new ArrayList<>();
+
+    @Transient
+    public boolean isVencida() {
+        return prazo != null && LocalDate.now().isAfter(prazo) && !finalizado;
+    }
 
     public TarefaDTO toDTO() {
         TarefaDTO tarefaDTO = new TarefaDTO();
@@ -126,6 +137,21 @@ public class Tarefa {
                     })
                     .collect(java.util.stream.Collectors.toList()));
         }
+
+        if (this.alocacoes != null && !this.alocacoes.isEmpty()) {
+            List<java.util.Map<String, Object>> pessoasAlocadas = this.alocacoes.stream()
+                    .filter(a -> a.getPessoa() != null)
+                    .map(a -> {
+                        java.util.Map<String, Object> p = new java.util.LinkedHashMap<>();
+                        p.put("id", a.getPessoa().getId());
+                        p.put("nome", a.getPessoa().getNome());
+                        p.put("email", a.getPessoa().getEmail());
+                        return p;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            tarefaDTO.setPessoasAlocadas(pessoasAlocadas);
+        }
+        tarefaDTO.setVencida(this.isVencida());
 
         return tarefaDTO;
     }

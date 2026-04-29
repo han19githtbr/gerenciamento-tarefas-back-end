@@ -111,4 +111,24 @@ public class TarefaController {
 		return Collections.singletonMap("total", count);
 	}
 
+	@DeleteMapping("/desalocar/{tarefaId}/{pessoaId}")
+	@Transactional
+	public ResponseEntity<TarefaDTO> desalocarPessoa(
+			@PathVariable Long tarefaId,
+			@PathVariable Long pessoaId) {
+		TarefaDTO dto = tarefaService.desalocarPessoa(tarefaId, pessoaId);
+		return ResponseEntity.ok(dto);
+	}
+
+	@GetMapping("/vencidas/count")
+	public Map<String, Long> contarVencidas() {
+		long count = tarefaService.contarVencidas();
+		return Collections.singletonMap("total", count);
+	}
+
+	@GetMapping("/vencidas")
+	public List<TarefaDTO> listarVencidas() {
+		return tarefaService.listarVencidas();
+	}
+
 }

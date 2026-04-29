@@ -30,7 +30,11 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 	List<Tarefa> ordemApresentacaoAsc();
 
 	// @Query(nativeQuery = true, value = "SELECT * FROM tarefa ORDER BY id ASC")
-	@Query("SELECT t FROM Tarefa t LEFT JOIN FETCH t.departamento ORDER BY t.id ASC")
+	@Query("SELECT DISTINCT t FROM Tarefa t " +
+			"LEFT JOIN FETCH t.departamento " +
+			"LEFT JOIN FETCH t.alocacoes a " +
+			"LEFT JOIN FETCH a.pessoa " +
+			"ORDER BY t.id ASC")
 	List<Tarefa> getAllTarefa();
 
 	// Feature 1 - Em Aandamento
@@ -60,5 +64,16 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 			"AND t.pessoa IS NOT NULL")
 	List<Tarefa> findTarefasParaLembrete(
 			@Param("amanha") LocalDate amanha);
+
+	@Query("SELECT COUNT(t) FROM Tarefa t " +
+			"WHERE t.prazo < :hoje AND t.finalizado = false")
+	long countVencidas(@Param("hoje") LocalDate hoje);
+
+	@Query("SELECT t FROM Tarefa t " +
+			"LEFT JOIN FETCH t.departamento " +
+			"LEFT JOIN FETCH t.alocacoes a " +
+			"LEFT JOIN FETCH a.pessoa " +
+			"WHERE t.prazo < :hoje AND t.finalizado = false")
+	List<Tarefa> findVencidas(@Param("hoje") LocalDate hoje);
 
 }

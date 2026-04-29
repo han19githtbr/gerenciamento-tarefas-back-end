@@ -31,6 +31,8 @@ import com.desafio.view.DepartamentoDTO;
 import com.desafio.view.PessoaDTO;
 import com.desafio.view.TarefaDTO;
 import com.desafio.service.NotificacaoService;
+import com.desafio.model.TarefaAlocacao;
+import com.desafio.repository.TarefaAlocacaoRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +48,8 @@ public class TarefaService {
 	private final MensagemRepository mensagemRepository;
 
 	private final NotificacaoService notificacaoService;
+
+	private final TarefaAlocacaoRepository tarefaAlocacaoRepository;
 
 	public TarefaDTO salvarTarefa(Tarefa tarefa) throws ParseException {
 
@@ -101,75 +105,54 @@ public class TarefaService {
 	}
 
 	public TarefaDTO alocarPessoaNaTarefa(Long tarefaId, Long pessoaId, String emailPessoa) {
-		// ADICIONE LOGS PARA DEBUG - isso ajudará a identificar o problema
-		log.info("=== INÍCIO ALOCAÇÃO ===");
-		log.info("Tarefa ID: " + tarefaId);
-		log.info("Pessoa ID: " + pessoaId);
+		log.info("=== INÍCIO MULTI-ALOCAÇÃO ===");
 
 		Tarefa tarefa = tarefaRepository.findById(tarefaId)
-				.orElseThrow(() -> {
-					log.error("ERRO: Tarefa não encontrada com ID: " + tarefaId);
-					return new EntityNotFoundException("Tarefa não encontrada.");
-				});
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
 		Pessoa pessoa = pessoaRepository.findById(pessoaId)
-				.orElseThrow(() -> {
-					log.error("ERRO: Pessoa não encontrada com ID: " + pessoaId);
-					return new EntityNotFoundException("Pessoa não encontrada.");
-				});
+				.orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada."));
 
 		TarefaDTO tarefaDTO = new TarefaDTO();
 
-		// LOGS DE DEBUG
-		log.info("Tarefa encontrada: " + tarefa.getTitulo());
-		log.info("Pessoa encontrada: " + pessoa.getNome());
-		log.info("Tarefa Departamento: " +
-				(tarefa.getDepartamento() != null
-						? tarefa.getDepartamento().getId() + " - " + tarefa.getDepartamento().getTitulo()
-						: "NULL"));
-		log.info("Pessoa Departamento: " +
-				(pessoa.getDepartamento() != null
-						? pessoa.getDepartamento().getId() + " - " + pessoa.getDepartamento().getTitulo()
-						: "NULL"));
-
-		// Verificação mais robusta de departamentos
-		if (tarefa.getDepartamento() == null) {
-			log.error("ERRO: Tarefa não possui departamento");
+		// Bloqueia tarefa vencida (Feature 4)
+		if (tarefa.isVencida()) {
 			tarefaDTO.setSuccess(Boolean.FALSE);
-			tarefaDTO.setMensagem("A tarefa não possui departamento.");
+			tarefaDTO.setMensagem("Não é possível alocar pessoas em tarefa com prazo vencido.");
 			return tarefaDTO;
 		}
 
-		if (pessoa.getDepartamento() == null) {
-			log.error("ERRO: Pessoa não possui departamento");
-			tarefaDTO.setSuccess(Boolean.FALSE);
-			tarefaDTO.setMensagem("A pessoa não possui departamento.");
-			return tarefaDTO;
-		}
-
-		// Comparar IDs dos departamentos em vez de objetos inteiros
-		Long tarefaDeptId = tarefa.getDepartamento().getId();
-		Long pessoaDeptId = pessoa.getDepartamento().getId();
-
-		log.info("Comparando departamentos: Tarefa=" + tarefaDeptId + ", Pessoa=" + pessoaDeptId);
-
-		if (!tarefaDeptId.equals(pessoaDeptId)) {
-			log.error("ERRO: Departamentos diferentes");
-			tarefaDTO.setSuccess(Boolean.FALSE);
-			tarefaDTO.setMensagem("A pessoa não pertence ao mesmo departamento da tarefa.");
-			return tarefaDTO;
-		}
-
-		// Verificar se a tarefa já está finalizada
 		if (tarefa.isFinalizado()) {
-			log.error("ERRO: Tarefa já finalizada");
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("Não é possível alocar pessoa em tarefa finalizada.");
 			return tarefaDTO;
 		}
 
-		// ADICIONE ESTA LINHA - atualiza a data de modificação
-		tarefa.setDataCriacao(LocalDateTime.now());
+		if (tarefa.getDepartamento() == null || pessoa.getDepartamento() == null) {
+			tarefaDTO.setSuccess(Boolean.FALSE);
+			tarefaDTO.setMensagem("Tarefa ou pessoa sem departamento definido.");
+			return tarefaDTO;
+		}
 
+		if (!tarefa.getDepartamento().getId().equals(pessoa.getDepartamento().getId())) {
+			tarefaDTO.setSuccess(Boolean.FALSE);
+			tarefaDTO.setMensagem("A pessoa não pertence ao mesmo departamento da tarefa.");
+			return tarefaDTO;
+		}
+
+		// Evita duplicata silenciosamente
+		if (tarefaAlocacaoRepository.existsByTarefaIdAndPessoaId(tarefaId, pessoaId)) {
+			tarefaDTO.setSuccess(Boolean.FALSE);
+			tarefaDTO.setMensagem("Esta pessoa já está alocada nesta tarefa.");
+			return tarefaDTO;
+		}
+
+		// Cria alocação
+		TarefaAlocacao alocacao = new TarefaAlocacao();
+		alocacao.setTarefa(tarefa);
+		alocacao.setPessoa(pessoa);
+		tarefaAlocacaoRepository.save(alocacao);
+
+		// Mantém compatibilidade: campo pessoa continua apontando para o último alocado
 		tarefa.setPessoa(pessoa);
 		tarefa.setEmAndamento(true);
 
@@ -180,20 +163,27 @@ public class TarefaService {
 
 		tarefaRepository.save(tarefa);
 
-		log.info("SUCESSO: Pessoa alocada na tarefa");
+		log.info("SUCESSO: Pessoa {} alocada na tarefa {}", pessoa.getNome(), tarefa.getTitulo());
 
 		tarefaDTO.setSuccess(Boolean.TRUE);
 		tarefaDTO.setMensagem("A pessoa foi alocada com sucesso");
-
-		// Preencha mais dados no DTO se necessário
 		tarefaDTO.setId(tarefa.getId());
 		tarefaDTO.setTitulo(tarefa.getTitulo());
-		tarefaDTO.setDescricao(tarefa.getDescricao());
-		if (tarefa.getPessoa() != null) {
-			tarefaDTO.setPessoaId(tarefa.getPessoa().getId());
-		}
-
 		return tarefaDTO;
+	}
+
+	@Transactional
+	public TarefaDTO desalocarPessoa(Long tarefaId, Long pessoaId) {
+		TarefaDTO dto = new TarefaDTO();
+		if (!tarefaAlocacaoRepository.existsByTarefaIdAndPessoaId(tarefaId, pessoaId)) {
+			dto.setSuccess(false);
+			dto.setMensagem("Alocação não encontrada.");
+			return dto;
+		}
+		tarefaAlocacaoRepository.deleteByTarefaIdAndPessoaId(tarefaId, pessoaId);
+		dto.setSuccess(true);
+		dto.setMensagem("Pessoa removida da tarefa com sucesso.");
+		return dto;
 	}
 
 	@Transactional(readOnly = true)
@@ -366,6 +356,11 @@ public class TarefaService {
 		return tarefaRepository.countTarefasEmAndamento();
 	}
 
+	@Transactional(readOnly = true)
+	public long contarVencidas() {
+		return tarefaRepository.countVencidas(LocalDate.now());
+	}
+
 	@Transactional(readOnly = true) // Feature 2 - Admin counts
 	public long count() {
 		return tarefaRepository.count();
@@ -455,6 +450,65 @@ public class TarefaService {
 				"adminEmail", adminEmail,
 				"dataResposta", mensagem.getDataResposta().toString(),
 				"respondida", true);
+	}
+
+	@Transactional
+	public Object prorrogarTarefa(Long tarefaId, LocalDate novoPrazo) {
+		Tarefa tarefa = tarefaRepository.findById(tarefaId)
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+
+		tarefa.setPrazo(novoPrazo);
+		tarefa.setNotificacaoVencimentoEnviada(false); // permite reenvio se vencer de novo
+		tarefaRepository.save(tarefa);
+
+		// Notifica todas as pessoas alocadas
+		if (tarefa.getAlocacoes() != null) {
+			for (TarefaAlocacao al : tarefa.getAlocacoes()) {
+				if (al.getPessoa() != null && al.getPessoa().getEmail() != null) {
+					notificacaoService.criarNotificacao(
+							al.getPessoa().getEmail(),
+							tarefaId,
+							"✅ Prazo prorrogado! A tarefa \"" + tarefa.getTitulo()
+									+ "\" tem novo prazo: " + novoPrazo);
+				}
+			}
+		}
+
+		return Map.of("success", true, "mensagem", "Tarefa prorrogada com sucesso.", "novoPrazo", novoPrazo.toString());
+	}
+
+	@Transactional
+	public Object encerrarTarefaVencida(Long tarefaId) {
+		Tarefa tarefa = tarefaRepository.findById(tarefaId)
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+
+		tarefa.setFinalizado(true);
+		tarefa.setEmAndamento(false);
+		tarefa.setDataConclusao(LocalDate.now());
+		tarefaRepository.save(tarefa);
+
+		// Notifica todas as pessoas alocadas
+		if (tarefa.getAlocacoes() != null) {
+			for (TarefaAlocacao al : tarefa.getAlocacoes()) {
+				if (al.getPessoa() != null && al.getPessoa().getEmail() != null) {
+					notificacaoService.criarNotificacao(
+							al.getPessoa().getEmail(),
+							tarefaId,
+							"🔴 A tarefa \"" + tarefa.getTitulo()
+									+ "\" foi encerrada pelo administrador.");
+				}
+			}
+		}
+
+		return Map.of("success", true, "mensagem", "Tarefa encerrada com sucesso.");
+	}
+
+	@Transactional(readOnly = true)
+	public List<TarefaDTO> listarVencidas() {
+		return tarefaRepository.findVencidas(LocalDate.now())
+				.stream()
+				.map(Tarefa::toDTO)
+				.collect(Collectors.toList());
 	}
 
 }

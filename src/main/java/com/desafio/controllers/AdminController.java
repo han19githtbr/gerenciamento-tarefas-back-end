@@ -94,4 +94,25 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("excluido", true));
     }
 
+    @PutMapping("/tarefa/{tarefaId}/prorrogar")
+    public ResponseEntity<?> prorrogarTarefa(
+            @PathVariable Long tarefaId,
+            @RequestBody Map<String, String> body) {
+
+        String novoPrazoStr = body.get("novoPrazo");
+        if (novoPrazoStr == null || novoPrazoStr.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "Campo 'novoPrazo' obrigatório."));
+        }
+
+        java.time.LocalDate novoPrazo = java.time.LocalDate.parse(novoPrazoStr);
+        Object resultado = tarefaService.prorrogarTarefa(tarefaId, novoPrazo);
+        return ResponseEntity.ok(resultado);
+    }
+
+    @PutMapping("/tarefa/{tarefaId}/encerrar")
+    public ResponseEntity<?> encerrarTarefa(@PathVariable Long tarefaId) {
+        Object resultado = tarefaService.encerrarTarefaVencida(tarefaId);
+        return ResponseEntity.ok(resultado);
+    }
+
 }
