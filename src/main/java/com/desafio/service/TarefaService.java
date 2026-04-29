@@ -24,6 +24,7 @@ import com.desafio.model.Mensagem;
 import com.desafio.model.Departamento;
 import com.desafio.model.Pessoa;
 import com.desafio.model.Tarefa;
+import com.desafio.repository.DepartamentoRepository;
 import com.desafio.repository.MensagemRepository;
 import com.desafio.repository.PessoaRepository;
 import com.desafio.repository.TarefaRepository;
@@ -45,6 +46,8 @@ public class TarefaService {
 
 	private final TarefaRepository tarefaRepository;
 
+	private final DepartamentoRepository departamentoRepository;
+
 	private final MensagemRepository mensagemRepository;
 
 	private final NotificacaoService notificacaoService;
@@ -59,9 +62,17 @@ public class TarefaService {
 
 		tarefa.setDataCriacao(LocalDateTime.now());
 		TarefaDTO tarefaDTO = new TarefaDTO();
-		if (tarefa.getTitulo() == null || tarefa.getDescricao() == null || tarefa.getPrazo() == null) {
+		if (tarefa.getTitulo() == null || tarefa.getDescricao() == null || tarefa.getPrazo() == null
+				|| tarefa.getDepartamento() == null || tarefa.getDepartamento().getId() == null) {
 			tarefaDTO.setSuccess(Boolean.FALSE);
 			tarefaDTO.setMensagem("Os campos da tarefa não podem ser nulos");
+			return tarefaDTO;
+		}
+
+		Departamento departamento = departamentoRepository.findById(tarefa.getDepartamento().getId()).orElse(null);
+		if (departamento == null) {
+			tarefaDTO.setSuccess(Boolean.FALSE);
+			tarefaDTO.setMensagem("Esse departamento nÃ£o existe");
 			return tarefaDTO;
 		}
 
@@ -73,6 +84,7 @@ public class TarefaService {
 
 		Long nextOrdem = this.nextOrdem();
 
+		tarefa.setDepartamento(departamento);
 		tarefa.setOrdem_apresentacao(nextOrdem);
 
 		tarefaRepository.save(tarefa);
@@ -81,10 +93,8 @@ public class TarefaService {
 		tarefaDTO.setDescricao(tarefa.getDescricao());
 		tarefaDTO.setPrazo(tarefa.getPrazo());
 
-		if (tarefa.getDepartamento() != null) {
-			tarefaDTO.setDepartamento(tarefa.getDepartamento().getTitulo());
-			tarefaDTO.setDepartamentoId(tarefa.getDepartamento().getId());
-		}
+		tarefaDTO.setDepartamento(departamento.getTitulo());
+		tarefaDTO.setDepartamentoId(departamento.getId());
 
 		tarefaDTO.setMensagem(tarefa.getTitulo() + " Foi salva com sucesso");
 
