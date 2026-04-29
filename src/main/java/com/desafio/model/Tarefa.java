@@ -48,9 +48,6 @@ public class Tarefa {
     @JsonBackReference("departamento-tarefas")
     private Departamento departamento;
 
-    @Column(name = "duracao", insertable = false, updatable = false)
-    private long duracao;
-
     private boolean finalizado;
 
     private boolean emAndamento = false;

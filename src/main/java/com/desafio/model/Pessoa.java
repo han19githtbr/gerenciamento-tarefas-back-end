@@ -66,8 +66,13 @@ public class Pessoa {
         pessoaDTO.setId(this.id);
         pessoaDTO.setNome(this.nome);
         pessoaDTO.setEmail(this.email);
-        pessoaDTO.setDepartamento(this.departamento.getTitulo());
-        pessoaDTO.setDepartamentoId(this.departamento.getId());
+        if (this.departamento != null) {
+            pessoaDTO.setDepartamento(this.departamento.getTitulo());
+            pessoaDTO.setDepartamentoId(this.departamento.getId());
+        } else {
+            pessoaDTO.setDepartamento("Sem departamento");
+            pessoaDTO.setDepartamentoId(null);
+        }
         pessoaDTO.setTotalHoras(this.calcularTotalHoras());
         return pessoaDTO;
     }
