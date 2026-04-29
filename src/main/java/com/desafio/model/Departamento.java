@@ -39,7 +39,7 @@ public class Departamento {
     @JsonManagedReference("departamento-tarefas")
     private List<Tarefa> tarefas;
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    // @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ordem_apresentacao")
     private Long ordem_apresentacao;
 

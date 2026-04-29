@@ -52,11 +52,11 @@ public class Tarefa {
 
     private boolean emAndamento = false;
 
-    @Column(name = "notificacao_vencimento_enviada", nullable = false, columnDefinition = "boolean default false")
+    @Column(name = "notificacao_vencimento_enviada", columnDefinition = "boolean default false")
     private boolean notificacaoVencimentoEnviada = false;
 
     @ManyToOne
-    @JoinColumn(name = "id_pessoa")
+    @JoinColumn(name = "id_pessoa", nullable = true)
     private Pessoa pessoa;
 
     @Column(name = "data_criacao")
@@ -72,7 +72,7 @@ public class Tarefa {
         return Duration.between(dataCriacao, LocalDateTime.now()).toHours();
     }
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    // @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ordem_apresentacao")
     private Long ordem_apresentacao;
 
