@@ -12,6 +12,8 @@ public interface TarefaAlocacaoRepository extends JpaRepository<TarefaAlocacao, 
     @Query("SELECT ta FROM TarefaAlocacao ta JOIN FETCH ta.pessoa WHERE ta.tarefa.id = :tarefaId")
     List<TarefaAlocacao> findByTarefaId(@Param("tarefaId") Long tarefaId);
 
+    long countByTarefaId(Long tarefaId);
+
     boolean existsByTarefaIdAndPessoaId(Long tarefaId, Long pessoaId);
 
     void deleteByTarefaIdAndPessoaId(Long tarefaId, Long pessoaId);

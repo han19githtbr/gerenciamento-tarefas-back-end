@@ -37,6 +37,11 @@ public class PessoaService {
 			return pessoaDTO;
 		}
 
+		if (pessoa.getDepartamento() != null) {
+			pessoaDTO.setDepartamentoId(pessoa.getDepartamento().getId());
+			pessoaDTO.setDepartamento(pessoa.getDepartamento().getTitulo());
+		}
+
 		if (pessoaRepository.checkNomePessoa(pessoa.getNome()) != null) {
 			pessoaDTO.setSuccess(Boolean.FALSE);
 			pessoaDTO.setMensagem("Já existe uma pessoa com esse nome.");
