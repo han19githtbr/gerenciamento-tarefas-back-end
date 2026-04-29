@@ -181,6 +181,17 @@ public class TarefaService {
 			return dto;
 		}
 		tarefaAlocacaoRepository.deleteByTarefaIdAndPessoaId(tarefaId, pessoaId);
+
+		// Verifica se ainda há pessoas alocadas; se não, marca como não em andamento
+		long restantes = tarefaAlocacaoRepository.countByTarefaId(tarefaId);
+		if (restantes == 0) {
+			Tarefa tarefa = tarefaRepository.findById(tarefaId)
+					.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+			tarefa.setEmAndamento(false);
+			tarefa.setPessoa(null);
+			tarefaRepository.save(tarefa);
+		}
+
 		dto.setSuccess(true);
 		dto.setMensagem("Pessoa removida da tarefa com sucesso.");
 		return dto;
