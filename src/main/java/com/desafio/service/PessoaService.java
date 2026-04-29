@@ -57,12 +57,15 @@ public class PessoaService {
 
 		Long nextOrdem = this.nextOrdem();
 
+		pessoa.setDepartamento(departamento);
 		pessoa.setOrdem_apresentacao(nextOrdem);
 
 		pessoaRepository.save(pessoa);
 		pessoaDTO.setId(pessoa.getId());
 		pessoaDTO.setNome(pessoa.getNome());
 		pessoaDTO.setEmail(pessoa.getEmail());
+		pessoaDTO.setDepartamento(departamento.getTitulo());
+		pessoaDTO.setDepartamentoId(departamento.getId());
 		pessoaDTO.setOrdem_apresentacao(pessoa.getOrdem_apresentacao());
 		pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salvo(a) com sucesso");
 		pessoaDTO.setSuccess(Boolean.TRUE);
@@ -110,8 +113,6 @@ public class PessoaService {
 				if (Objects.isNull(novaPessoaModel)) {
 					pessoaModel.setNome(pessoa.getNome());
 
-					pessoaRepository.save(pessoaModel);
-
 					pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salva com sucesso.");
 					pessoaDTO.setSuccess(Boolean.TRUE);
 				} else {
@@ -122,14 +123,30 @@ public class PessoaService {
 			} else {
 				pessoaModel.setNome(pessoa.getNome());
 
-				pessoaRepository.save(pessoaModel);
-
 				pessoaDTO.setMensagem("A pessoa " + pessoa.getNome() + " foi salva com sucesso.");
 				pessoaDTO.setSuccess(Boolean.TRUE);
 			}
 
-			pessoaDTO.setId(pessoa.getId());
-			pessoaDTO.setNome(pessoa.getNome());
+			if (pessoa.getDepartamento() != null && pessoa.getDepartamento().getId() != null) {
+				Departamento departamento = departamentoRepository.findById(pessoa.getDepartamento().getId()).orElse(null);
+				if (departamento == null) {
+					pessoaDTO.setSuccess(Boolean.FALSE);
+					pessoaDTO.setMensagem("Esse departamento nÃ£o existe");
+					return pessoaDTO;
+				}
+				pessoaModel.setDepartamento(departamento);
+			}
+
+			pessoaRepository.save(pessoaModel);
+
+			pessoaDTO.setId(pessoaModel.getId());
+			pessoaDTO.setNome(pessoaModel.getNome());
+			pessoaDTO.setEmail(pessoaModel.getEmail());
+			pessoaDTO.setOrdem_apresentacao(pessoaModel.getOrdem_apresentacao());
+			if (pessoaModel.getDepartamento() != null) {
+				pessoaDTO.setDepartamento(pessoaModel.getDepartamento().getTitulo());
+				pessoaDTO.setDepartamentoId(pessoaModel.getDepartamento().getId());
+			}
 
 			return pessoaDTO;
 

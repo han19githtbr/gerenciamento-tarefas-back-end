@@ -104,6 +104,7 @@ public class TarefaService {
 		}
 	}
 
+	@Transactional
 	public TarefaDTO alocarPessoaNaTarefa(Long tarefaId, Long pessoaId, String emailPessoa) {
 		log.info("=== INÍCIO MULTI-ALOCAÇÃO ===");
 
@@ -165,11 +166,10 @@ public class TarefaService {
 
 		log.info("SUCESSO: Pessoa {} alocada na tarefa {}", pessoa.getNome(), tarefa.getTitulo());
 
-		tarefaDTO.setSuccess(Boolean.TRUE);
-		tarefaDTO.setMensagem("A pessoa foi alocada com sucesso");
-		tarefaDTO.setId(tarefa.getId());
-		tarefaDTO.setTitulo(tarefa.getTitulo());
-		return tarefaDTO;
+		TarefaDTO dto = montarDTOComPessoasAlocadas(tarefa);
+		dto.setSuccess(Boolean.TRUE);
+		dto.setMensagem("A pessoa foi alocada com sucesso");
+		return dto;
 	}
 
 	@Transactional
@@ -203,7 +203,7 @@ public class TarefaService {
 		List<TarefaDTO> tarefasDTO = new ArrayList<>();
 
 		for (Tarefa tarefa : tarefas) {
-			tarefasDTO.add(tarefa.toDTO());
+			tarefasDTO.add(montarDTOComPessoasAlocadas(tarefa));
 		}
 
 		return tarefasDTO;
@@ -392,7 +392,7 @@ public class TarefaService {
 	@Transactional(readOnly = true)
 	public List<TarefaDTO> getTarefasByPessoa(Long pessoaId) {
 		List<Tarefa> tarefas = tarefaRepository.findByPessoaId(pessoaId);
-		return tarefas.stream().map(Tarefa::toDTO).collect(Collectors.toList());
+		return tarefas.stream().map(this::montarDTOComPessoasAlocadas).collect(Collectors.toList());
 	}
 
 	public TarefaDTO iniciarTarefa(Long tarefaId, String email) {
@@ -518,8 +518,24 @@ public class TarefaService {
 	public List<TarefaDTO> listarVencidas() {
 		return tarefaRepository.findVencidas(LocalDate.now())
 				.stream()
-				.map(Tarefa::toDTO)
+				.map(this::montarDTOComPessoasAlocadas)
 				.collect(Collectors.toList());
+	}
+
+	private TarefaDTO montarDTOComPessoasAlocadas(Tarefa tarefa) {
+		TarefaDTO dto = tarefa.toDTO();
+		List<Map<String, Object>> pessoasAlocadas = tarefaAlocacaoRepository.findByTarefaId(tarefa.getId()).stream()
+				.filter(alocacao -> alocacao.getPessoa() != null)
+				.map(alocacao -> {
+					Map<String, Object> pessoaMap = new java.util.LinkedHashMap<>();
+					pessoaMap.put("id", alocacao.getPessoa().getId());
+					pessoaMap.put("nome", alocacao.getPessoa().getNome());
+					pessoaMap.put("email", alocacao.getPessoa().getEmail());
+					return pessoaMap;
+				})
+				.collect(Collectors.toList());
+		dto.setPessoasAlocadas(pessoasAlocadas);
+		return dto;
 	}
 
 }

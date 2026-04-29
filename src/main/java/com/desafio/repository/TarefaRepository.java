@@ -53,7 +53,12 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 	long countConcluidas();
 
 	// Feature 3 - Tarefas por pessoa
-	@Query("SELECT t FROM Tarefa t WHERE t.pessoa.id = :pessoaId ORDER BY t.prazo ASC")
+	@Query("SELECT DISTINCT t FROM Tarefa t " +
+			"LEFT JOIN FETCH t.departamento " +
+			"LEFT JOIN FETCH t.alocacoes a " +
+			"LEFT JOIN FETCH a.pessoa " +
+			"WHERE t.pessoa.id = :pessoaId OR a.pessoa.id = :pessoaId " +
+			"ORDER BY t.prazo ASC")
 	List<Tarefa> findByPessoaId(@Param("pessoaId") Long pessoaId);
 
 	// Feature 4 - Lembretes: prazo é amanhã, tarefa não finalizada, pessoa alocada
