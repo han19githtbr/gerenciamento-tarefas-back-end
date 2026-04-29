@@ -52,7 +52,9 @@ public class Pessoa {
     private List<Tarefa> tarefas;
 
     public long calcularTotalHoras() {
-        return getTarefas().stream().mapToLong(Tarefa::getDuracao).sum();
+        if (this.tarefas == null || this.tarefas.isEmpty())
+            return 0L;
+        return this.tarefas.stream().mapToLong(Tarefa::getDuracao).sum();
     }
 
     @GeneratedValue(strategy = GenerationType.AUTO)

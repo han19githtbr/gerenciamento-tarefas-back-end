@@ -19,7 +19,10 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long> {
 	@Query(nativeQuery = true, value = "SELECT * FROM pessoa as p where p.id = :id")
 	Pessoa checkId(@Param("id") Long id);
 
-	@Query(nativeQuery = true, value = "SELECT * FROM pessoa ORDER BY id ASC")
+	@Query("SELECT DISTINCT p FROM Pessoa p " +
+			"LEFT JOIN FETCH p.departamento " +
+			"LEFT JOIN FETCH p.tarefas " +
+			"ORDER BY p.id ASC")
 	List<Pessoa> getAllPessoa();
 
 	@Query("SELECT p FROM Pessoa p WHERE LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))")
