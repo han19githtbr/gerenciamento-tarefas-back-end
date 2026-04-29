@@ -13,7 +13,7 @@ import com.desafio.model.Tarefa;
 
 public interface PessoaRepository extends JpaRepository<Pessoa, Long> {
 
-	@Query("SELECT p, t.duracao FROM Pessoa p LEFT JOIN p.tarefas t GROUP BY p")
+	@Query("SELECT p, COUNT(t) FROM Pessoa p LEFT JOIN p.tarefas t GROUP BY p")
 	List<Object[]> obterTodasPessoas();
 
 	@Query(nativeQuery = true, value = "SELECT * FROM pessoa as p where p.id = :id")
@@ -28,9 +28,8 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long> {
 	@Query("SELECT p FROM Pessoa p WHERE LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))")
 	List<Pessoa> findByName(@Param("nome") String nome);
 
-	@Query("SELECT t FROM Tarefa t JOIN t.pessoa p WHERE LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND t.dataCriacao = :dataCriacao AND t.duracao = :duracao")
-	List<Tarefa> findByNameAndPeriod(@Param("nome") String nome, @Param("dataCriacao") LocalDateTime dataCriacao,
-			@Param("duracao") long duracao);
+	@Query("SELECT t FROM Tarefa t JOIN t.pessoa p WHERE LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND t.dataCriacao = :dataCriacao")
+	List<Tarefa> findByNameAndPeriod(@Param("nome") String nome, @Param("dataCriacao") LocalDateTime dataCriacao);
 
 	@Query(nativeQuery = true, value = "SELECT * FROM Pessoa as p where p.nome = :nome")
 	Pessoa checkNomePessoa(@Param("nome") String nome);

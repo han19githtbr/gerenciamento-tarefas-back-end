@@ -177,7 +177,9 @@ public class PessoaService {
 			return pessoaDTO;
 		}
 
-		List<Tarefa> tarefas = pessoaRepository.findByNameAndPeriod(nome, dataCriacao, duracao);
+		List<Tarefa> tarefas = pessoaRepository.findByNameAndPeriod(nome, dataCriacao).stream()
+				.filter(tarefa -> tarefa.getDuracao() == duracao)
+				.collect(Collectors.toList());
 
 		if (tarefas.isEmpty()) {
 			pessoaDTO.setMensagem("A tarefa não existe");

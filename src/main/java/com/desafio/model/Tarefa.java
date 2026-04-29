@@ -52,6 +52,7 @@ public class Tarefa {
 
     private boolean emAndamento = false;
 
+    @Column(name = "notificacao_vencimento_enviada", nullable = false, columnDefinition = "boolean default false")
     private boolean notificacaoVencimentoEnviada = false;
 
     @ManyToOne
