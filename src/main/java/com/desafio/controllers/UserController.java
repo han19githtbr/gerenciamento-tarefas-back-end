@@ -21,8 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.desafio.model.Pessoa;
 import com.desafio.model.Tarefa;
 import com.desafio.repository.PessoaRepository;
+import com.desafio.service.NotificacaoService;
 import com.desafio.service.TarefaService;
 import com.desafio.view.TarefaDTO;
+import com.desafio.repository.NotificacaoRepository;
+import com.desafio.repository.TarefaRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,8 +40,10 @@ public class UserController {
     private final TarefaService tarefaService;
 
     private final PessoaRepository pessoaRepository;
-
+    private final NotificacaoRepository notificacaoRepository;
+    private final TarefaRepository tarefaRepository;
     private final MensagemRepository mensagemRepository;
+    private final NotificacaoService notificacaoService;
 
     // Busca tarefas do usuário logado pelo email
     @GetMapping("/minhas-tarefas")
@@ -69,6 +74,45 @@ public class UserController {
             System.err.println("Erro ao enviar mensagem: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("erro", "Erro interno ao enviar mensagem."));
         }
+    }
+
+    @PostMapping("/notificacao/{notifId}/responder-vencimento")
+    public ResponseEntity<?> responderVencimento(
+            @PathVariable Long notifId,
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
+
+        String email = auth.getName();
+        String opcao = body.get("opcao"); // "A" ou "B"
+
+        if (opcao == null || (!opcao.equals("A") && !opcao.equals("B"))) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "Opção inválida. Envie 'A' ou 'B'."));
+        }
+
+        // Busca a notificação
+        com.desafio.model.Notificacao notif = notificacaoRepository.findById(notifId).orElse(null);
+        if (notif == null || !notif.getDestinatarioEmail().equals(email)) {
+            return ResponseEntity.status(403).body(Map.of("erro", "Notificação não encontrada."));
+        }
+
+        // Marca como lida (usuário respondeu)
+        notif.setLida(true);
+        notificacaoRepository.save(notif);
+
+        // Busca a tarefa para o título
+        Long tarefaId = notif.getTarefaId();
+        com.desafio.model.Tarefa tarefa = tarefaRepository.findById(tarefaId).orElse(null);
+        String titulo = tarefa != null ? tarefa.getTitulo() : "ID " + tarefaId;
+
+        // Monta mensagem para o admin
+        String msgAdmin = opcao.equals("A")
+                ? "📩 Usuário " + email + " respondeu na tarefa \"" + titulo + "\": A) Preciso de um prazo maior."
+                : "📩 Usuário " + email + " respondeu na tarefa \"" + titulo
+                        + "\": B) Não estou conseguindo executar a tarefa.";
+
+        notificacaoService.criarNotificacaoParaAdmin(tarefaId, msgAdmin);
+
+        return ResponseEntity.ok(Map.of("success", true, "mensagem", "Resposta enviada ao administrador."));
     }
 
     // Usuário inicia uma tarefa (muda status para em andamento)

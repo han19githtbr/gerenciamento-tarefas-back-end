@@ -75,13 +75,7 @@ public class LembreteTarefaScheduler {
                 String nomePessoa = al.getPessoa().getNome();
 
                 // Notificação para o colaborador com as duas opções
-                notificacaoService.criarNotificacao(
-                        email,
-                        tarefa.getId(),
-                        "📋 PRAZO VENCIDO — Tarefa: \"" + tarefa.getTitulo() + "\".\n"
-                                + "Responda ao administrador:\n"
-                                + "A) Preciso de um prazo maior\n"
-                                + "B) Não estou conseguindo executar a tarefa");
+                notificacaoService.criarNotificacaoPrazoVencido(email, tarefa.getId(), tarefa.getTitulo());
 
                 // Notificação para o admin
                 notificacaoService.criarNotificacaoParaAdmin(

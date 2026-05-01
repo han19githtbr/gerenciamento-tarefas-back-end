@@ -1,6 +1,8 @@
 package com.desafio.model;
 
 import java.time.LocalDateTime;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -28,6 +30,9 @@ public class Notificacao {
     private String mensagem;
 
     private boolean lida;
+
+    @Column(nullable = true)
+    private String tipo;
 
     private LocalDateTime dataCriacao;
 

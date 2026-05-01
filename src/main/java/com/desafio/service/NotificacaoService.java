@@ -33,6 +33,18 @@ public class NotificacaoService {
         notificacaoRepository.save(n);
     }
 
+    public void criarNotificacaoPrazoVencido(String email, Long tarefaId, String tituloTarefa) {
+        Notificacao n = new Notificacao();
+        n.setDestinatarioEmail(email);
+        n.setTarefaId(tarefaId);
+        n.setMensagem("📋 PRAZO VENCIDO — Tarefa: \"" + tituloTarefa
+                + "\". Responda ao administrador: A) Preciso de um prazo maior  B) Não estou conseguindo executar a tarefa");
+        n.setTipo("PRAZO_VENCIDO");
+        n.setLida(false);
+        n.setDataCriacao(LocalDateTime.now());
+        notificacaoRepository.save(n);
+    }
+
     // ← NOVO: cria notificação especificamente para o admin
     public void criarNotificacaoParaAdmin(Long tarefaId, String msg) {
         criarNotificacao(adminEmail, tarefaId, msg);
