@@ -506,20 +506,23 @@ public class TarefaService {
 		tarefa.setFinalizado(true);
 		tarefa.setEmAndamento(false);
 		tarefa.setDataConclusao(LocalDate.now());
+		tarefa.setPessoa(null); // remove referência direta
 		tarefaRepository.save(tarefa);
 
-		// Notifica todas as pessoas alocadas
-		if (tarefa.getAlocacoes() != null) {
-			for (TarefaAlocacao al : tarefa.getAlocacoes()) {
-				if (al.getPessoa() != null && al.getPessoa().getEmail() != null) {
-					notificacaoService.criarNotificacao(
-							al.getPessoa().getEmail(),
-							tarefaId,
-							"🔴 A tarefa \"" + tarefa.getTitulo()
-									+ "\" foi encerrada pelo administrador.");
-				}
+		// Notifica e depois remove todas as alocações
+		List<TarefaAlocacao> alocacoes = tarefaAlocacaoRepository.findByTarefaId(tarefaId);
+		for (TarefaAlocacao al : alocacoes) {
+			if (al.getPessoa() != null && al.getPessoa().getEmail() != null) {
+				notificacaoService.criarNotificacao(
+						al.getPessoa().getEmail(),
+						tarefaId,
+						"🔴 A tarefa \"" + tarefa.getTitulo()
+								+ "\" foi encerrada pelo administrador. Você foi desalocado(a).");
 			}
 		}
+
+		// Remove todas as alocações da tarefa
+		tarefaAlocacaoRepository.deleteAll(alocacoes);
 
 		return Map.of("success", true, "mensagem", "Tarefa encerrada com sucesso.");
 	}

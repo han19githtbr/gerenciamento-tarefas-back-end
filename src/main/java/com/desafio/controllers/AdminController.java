@@ -53,7 +53,11 @@ public class AdminController {
         return ResponseEntity.ok(resultado);
     }
 
-    // ← ADICIONAR ESTE ENDPOINT
+    @GetMapping("/tarefas/vencidas")
+    public List<com.desafio.view.TarefaDTO> getTarefasVencidas() {
+        return tarefaService.listarVencidas();
+    }
+
     @GetMapping("/mensagens/pendentes")
     public List<Map<String, Object>> getMensagensPendentes() {
         List<Mensagem> mensagens = mensagemRepository.findByRespondidaFalse();
