@@ -527,6 +527,29 @@ public class TarefaService {
 		return Map.of("success", true, "mensagem", "Tarefa encerrada com sucesso.");
 	}
 
+	@Transactional
+	public Object editarTarefaAdmin(Long tarefaId, String titulo, String descricao, java.time.LocalDate prazo) {
+		Tarefa tarefa = tarefaRepository.findById(tarefaId)
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+
+		// Verifica se outro título já existe (somente se o título mudou)
+		if (!tarefa.getTitulo().equalsIgnoreCase(titulo) && tarefaRepository.existsByTituloIgnoreCase(titulo)) {
+			return Map.of("success", false, "mensagem", "Já existe uma tarefa com esse título.");
+		}
+
+		tarefa.setTitulo(titulo);
+		if (descricao != null)
+			tarefa.setDescricao(descricao);
+		if (prazo != null) {
+			tarefa.setPrazo(prazo);
+			tarefa.setNotificacaoVencimentoEnviada(false); // permite reenvio se vencer de novo
+		}
+		tarefaRepository.save(tarefa);
+
+		return Map.of("success", true, "mensagem", "Tarefa atualizada com sucesso.",
+				"id", tarefa.getId(), "titulo", tarefa.getTitulo());
+	}
+
 	@Transactional(readOnly = true)
 	public List<TarefaDTO> listarVencidas() {
 		return tarefaRepository.findVencidas(LocalDate.now())

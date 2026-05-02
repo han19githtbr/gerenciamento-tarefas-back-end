@@ -113,6 +113,27 @@ public class AdminController {
         return ResponseEntity.ok(resultado);
     }
 
+    @PutMapping("/tarefa/{tarefaId}/editar")
+    public ResponseEntity<?> editarTarefa(
+            @PathVariable Long tarefaId,
+            @RequestBody Map<String, String> body) {
+
+        String titulo = body.get("titulo");
+        String descricao = body.get("descricao");
+        String prazoStr = body.get("prazo");
+
+        if (titulo == null || titulo.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "Campo 'titulo' obrigatório."));
+        }
+
+        java.time.LocalDate prazo = (prazoStr != null && !prazoStr.isBlank())
+                ? java.time.LocalDate.parse(prazoStr)
+                : null;
+
+        Object resultado = tarefaService.editarTarefaAdmin(tarefaId, titulo, descricao, prazo);
+        return ResponseEntity.ok(resultado);
+    }
+
     @PutMapping("/tarefa/{tarefaId}/encerrar")
     public ResponseEntity<?> encerrarTarefa(@PathVariable Long tarefaId) {
         Object resultado = tarefaService.encerrarTarefaVencida(tarefaId);

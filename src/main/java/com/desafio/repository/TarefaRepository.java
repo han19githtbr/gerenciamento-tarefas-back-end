@@ -48,7 +48,9 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 	long countTarefasEmAndamento();
 
 	// Feature 2 - Admin dashboard
-	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.pessoa IS NULL AND t.finalizado = false")
+	@Query("SELECT COUNT(DISTINCT t) FROM Tarefa t " +
+			"LEFT JOIN t.alocacoes a " +
+			"WHERE t.finalizado = false AND t.pessoa IS NULL AND a IS NULL")
 	long countPendentes();
 
 	@Query("SELECT COUNT(t) FROM Tarefa t WHERE t.finalizado = true")
