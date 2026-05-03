@@ -29,6 +29,7 @@ public class TarefaDTO {
     private Pessoa pessoa;
     private String mensagem;
     private Boolean success;
+    private boolean aguardandoConclusao;
 
     // USANDO Map (compatível com seu código existente)
     private List<Map<String, Object>> mensagens;

@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -44,6 +45,9 @@ public class UserController {
     private final TarefaRepository tarefaRepository;
     private final MensagemRepository mensagemRepository;
     private final NotificacaoService notificacaoService;
+
+    @Value("${admin.email}")
+    private String adminEmail;
 
     // Busca tarefas do usuário logado pelo email
     @GetMapping("/minhas-tarefas")
@@ -136,6 +140,38 @@ public class UserController {
         }
         mensagemRepository.deleteById(msgId);
         return ResponseEntity.ok(Map.of("excluido", true));
+    }
+
+    @PostMapping("/tarefa/{tarefaId}/notificar-conclusao")
+    public ResponseEntity<?> notificarConclusao(
+            @PathVariable Long tarefaId,
+            Authentication auth) {
+        String email = auth.getName();
+
+        Tarefa tarefa = tarefaRepository.findById(tarefaId).orElse(null);
+        if (tarefa == null) {
+            return ResponseEntity.status(404).body(Map.of("erro", "Tarefa não encontrada."));
+        }
+        if (tarefa.isFinalizado()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "Tarefa já está concluída."));
+        }
+
+        // Verifica se já existe notificação de conclusão pendente para esta tarefa
+        boolean jaExiste = notificacaoRepository
+                .findByDestinatarioEmailAndLidaFalse(adminEmail)
+                .stream()
+                .anyMatch(n -> "CONCLUSAO_PENDENTE".equals(n.getTipo())
+                        && tarefaId.equals(n.getTarefaId()));
+        if (jaExiste) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("erro", "Já existe uma solicitação de conclusão pendente para esta tarefa."));
+        }
+
+        String msg = "✅ Usuário " + email + " concluiu a tarefa \"" + tarefa.getTitulo()
+                + "\" antes do prazo e solicita aprovação.";
+        notificacaoService.criarNotificacaoTipada(adminEmail, tarefaId, msg, "CONCLUSAO_PENDENTE");
+
+        return ResponseEntity.ok(Map.of("success", true, "mensagem", "Notificação enviada ao administrador."));
     }
 
 }
