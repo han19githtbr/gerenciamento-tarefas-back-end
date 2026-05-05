@@ -7,15 +7,15 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.5.4</version> <!-- Versão compatível com javax.servlet -->
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>2.5.4</version>
+		<relativePath/>
 	</parent>
 
 	<groupId>com.desafio</groupId>
 	<artifactId>desafio</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>desafio</name>
-	<description>Back-end project</description>
+	<description>Back-end project — Gerenciamento de Tarefas</description>
 
 	<properties>
 		<java.version>11</java.version>
@@ -26,6 +26,7 @@
 	</properties>
 
 	<dependencies>
+		<!-- ===== Core ===== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -34,18 +35,14 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-		<!--<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>-->
-		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+
+		<!-- ===== Banco de Dados ===== -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -54,18 +51,29 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>5.6.5.Final</version> <!-- Versão compatível com javax.servlet -->
+			<version>5.6.5.Final</version>
 		</dependency>
+
+		<!-- ===== Flyway — controle de versao do banco ===== -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+
+		<!-- ===== Swagger / OpenAPI ===== -->
+		<!-- springdoc 1.x compativel com Spring Boot 2.x + javax.servlet -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.7.0</version>
+		</dependency>
+
+		<!-- ===== Seguranca / Auth ===== -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
-			<version>4.0.1</version> <!-- Versão compatível com Spring Boot 2.5.4 -->
+			<version>4.0.1</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -75,6 +83,15 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
+
+		<!-- ===== Utilitarios ===== -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- ===== Testes ===== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -91,7 +108,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version> <!-- Atualizado -->
+				<version>3.10.1</version>
 				<configuration>
 					<source>11</source>
 					<target>11</target>

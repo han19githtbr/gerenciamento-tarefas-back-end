@@ -40,6 +40,13 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeRequests(auth -> auth
                         .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // Swagger / OpenAPI — acesso publico para documentacao
+                        .antMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs")
+                        .permitAll()
                         .antMatchers("/admin/**").hasRole("ADMIN")
                         .antMatchers("/usuario/**").hasAnyRole("USER", "ADMIN")
                         .antMatchers("/departamentos/**").hasAnyRole("USER", "ADMIN")
