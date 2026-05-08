@@ -57,14 +57,15 @@ Sistema full-stack de gerenciamento de tarefas com controle de acesso por perfil
 1. [Visão Geral da Aplicação](#-visão-geral-da-aplicação)
 2. [Funcionalidades Desenvolvidas](#-funcionalidades-desenvolvidas)
 3. [Tecnologias e Bibliotecas — Back-end](#-tecnologias-e-bibliotecas--back-end)
-4. [Tecnologias e Bibliotecas — Front-end](#-tecnologias-e-bibliotecas--front-end)
-5. [Arquitetura e Relacionamento entre as Tecnologias](#-arquitetura-e-relacionamento-entre-as-tecnologias)
-6. [Fluxo da Aplicação — Back-end](#-fluxo-da-aplicação--back-end)
-7. [Fluxo da Aplicação — Front-end](#-fluxo-da-aplicação--front-end)
-8. [Como o Angular se conecta com o Back-end](#-como-o-angular-se-conecta-com-o-back-end)
-9. [Endpoints da API REST](#-endpoints-da-api-rest)
-10. [Variáveis de Ambiente](#-variáveis-de-ambiente)
-11. [Como executar o projeto](#-como-executar-o-projeto)
+4. [Melhorias Recomendadas para Evolução Profissional do Back-end](#-melhorias-recomendadas-para-evolução-profissional-do-back-end)
+5. [Tecnologias e Bibliotecas — Front-end](#-tecnologias-e-bibliotecas--front-end)
+6. [Arquitetura e Relacionamento entre as Tecnologias](#-arquitetura-e-relacionamento-entre-as-tecnologias)
+7. [Fluxo da Aplicação — Back-end](#-fluxo-da-aplicação--back-end)
+8. [Fluxo da Aplicação — Front-end](#-fluxo-da-aplicação--front-end)
+9. [Como o Angular se conecta com o Back-end](#-como-o-angular-se-conecta-com-o-back-end)
+10. [Endpoints da API REST](#-endpoints-da-api-rest)
+11. [Variáveis de Ambiente](#-variáveis-de-ambiente)
+12. [Como executar o projeto](#-como-executar-o-projeto)
 
 ---
 
@@ -183,6 +184,87 @@ O **back-end** expõe uma API REST protegida por JWT (Google OAuth2). O **front-
 | Biblioteca | Papel |
 |---|---|
 | **Spring Boot Starter Test** | JUnit 5 + Mockito + Spring Test para testes de unidade e integração |
+
+---
+
+## 🧭 Melhorias Recomendadas para Evolução Profissional do Back-end
+
+O back-end já possui uma base organizada e funcional: Spring Boot, camadas separadas em `controllers`, `service`, `repository`, `model`, DTOs, segurança com OAuth2/JWT, tratamento global de exceções, scheduler e deploy preparado por variáveis de ambiente. Para deixar a aplicação mais completa e profissional sem quebrar funcionalidades existentes nem o deploy, a melhor estratégia é evoluir em etapas pequenas e compatíveis com o Spring Boot 2.5.4 e Java 11.
+
+### Prioridade 1 — Melhorias seguras e de baixo risco
+
+Estas melhorias podem ser adicionadas com impacto controlado, pois não exigem reescrever regras de negócio nem alterar contratos da API imediatamente.
+
+| Melhoria | Biblioteca / Técnica | Por que acrescentar | Cuidado para não quebrar |
+|---|---|---|---|
+| **Validação de entrada** | `spring-boot-starter-validation` / Bean Validation | Permite usar `@NotBlank`, `@NotNull`, `@Email`, `@Size` e `@Valid` nos DTOs, deixando controllers mais limpos e respostas mais previsíveis | Começar validando apenas novos DTOs ou campos obrigatórios já exigidos pela regra atual |
+| **Documentação automática da API** | `springdoc-openapi-ui` compatível com Spring Boot 2.x | Gera Swagger UI/OpenAPI para testar endpoints, documentar payloads e facilitar manutenção | Documentar primeiro os endpoints existentes, sem renomear rotas |
+| **Migração versionada do banco** | Flyway ou Liquibase | Substitui ajustes manuais e reduz risco de diferenças entre banco local e produção | Introduzir com baseline do schema atual antes de remover `ddl-auto=update` |
+| **Testes de integração da API** | MockMvc + Spring Security Test | Garante que autenticação, roles e endpoints críticos continuem funcionando após mudanças | Começar por controllers principais: tarefas, pessoas e departamentos |
+| **Mapeamento de DTOs** | MapStruct ou mappers manuais dedicados | Evita conversões espalhadas nos services/controllers e deixa o contrato da API mais claro | Migrar aos poucos, mantendo os nomes e formatos atuais dos JSONs |
+| **Observabilidade básica** | Spring Boot Actuator | Adiciona endpoints de saúde, métricas e informações úteis para deploy em produção | Expor publicamente apenas `/actuator/health`; proteger os demais endpoints |
+
+### Prioridade 2 — Organização arquitetural
+
+A arquitetura atual já segue uma separação clássica em camadas. Para amadurecer o projeto sem trocar tudo de lugar, a evolução recomendada é explicitar melhor as responsabilidades:
+
+```text
+controller  -> recebe HTTP, valida entrada e retorna resposta
+service     -> concentra regras de negócio e transações
+repository  -> acessa o banco com Spring Data JPA
+model       -> representa entidades persistidas
+dto/view    -> representa dados de entrada e saída da API
+config      -> segurança, CORS, exceções e infraestrutura
+scheduler   -> rotinas automáticas agendadas
+```
+
+Uma melhoria simples é separar DTOs de entrada e saída quando o projeto crescer:
+
+```text
+view/
+├── request/
+│   ├── TarefaRequest.java
+│   ├── PessoaRequest.java
+│   └── DepartamentoRequest.java
+└── response/
+    ├── TarefaResponse.java
+    ├── PessoaResponse.java
+    └── DepartamentoResponse.java
+```
+
+Isso deixa claro o que a API recebe e o que ela devolve, sem expor diretamente detalhes das entidades JPA.
+
+### Prioridade 3 — Produção e deploy
+
+Para produção, as melhorias mais profissionais são:
+
+- **Manter configuração por variáveis de ambiente**, como já ocorre com `JDBC_DATABASE_URL`, `PORT`, `ADMIN_EMAIL`, `CORS_ALLOWED_ORIGINS`, `MAIL_USERNAME` e `MAIL_PASSWORD`.
+- **Trocar gradualmente `spring.jpa.hibernate.ddl-auto=update` por migrações versionadas**, depois que Flyway/Liquibase estiver configurado com baseline.
+- **Adicionar health check com Actuator**, útil para Render, Docker e monitoramento.
+- **Remover credenciais fixas de documentação antiga**, mantendo exemplos genéricos como `SUA_SENHA` ou variáveis de ambiente.
+- **Criar perfis de ambiente**, por exemplo `application-dev.properties` e `application-prod.properties`, para separar configuração local de produção.
+
+### Ordem sugerida de implementação
+
+1. Adicionar Bean Validation nos DTOs e controllers.
+2. Adicionar Swagger/OpenAPI para documentar a API atual.
+3. Criar testes de integração dos endpoints mais usados.
+4. Introduzir Flyway ou Liquibase com baseline do banco existente.
+5. Adicionar Actuator com exposição limitada do health check.
+6. Separar DTOs em `request` e `response` conforme novas funcionalidades forem surgindo.
+7. Avaliar MapStruct quando houver muitas conversões repetidas.
+
+### O que evitar neste momento
+
+Algumas mudanças parecem profissionais, mas teriam risco maior para este projeto agora:
+
+- Migrar imediatamente para Spring Boot 3, porque exige Java 17 e troca de `javax.*` para `jakarta.*`.
+- Mudar todos os endpoints REST de uma vez, pois isso quebraria o front-end Angular.
+- Substituir JPA/Hibernate por outra tecnologia de persistência sem uma necessidade real.
+- Transformar o projeto em microserviços antes de haver necessidade de escala ou times separados.
+- Remover `ddl-auto=update` antes de existir uma migração inicial confiável do banco.
+
+Resumo: o caminho mais seguro é manter a arquitetura atual, fortalecer validação, documentação, testes, migração de banco e observabilidade. Essas adições deixam a aplicação com aparência e manutenção de projeto profissional sem mexer no fluxo funcional que já está rodando.
 
 ---
 
