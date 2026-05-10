@@ -800,3 +800,116 @@ src/app/
 ###### Executar o projeto ####################################################
 
 "C:\Program Files\apache-maven-3.9.12\bin\mvn" clean spring-boot:run
+
+---
+
+## 🤖 Integração com Inteligência Artificial (Anthropic Claude)
+
+Esta aplicação integra a **API da Anthropic (Claude)** para automatizar três operações do sistema de gerenciamento de tarefas. A integração é gratuita nos créditos iniciais da plataforma e demonstra uso real de LLM em contexto de produção.
+
+### Arquitetura da integração
+
+```
+Angular (Front-end)
+   │
+   ├── AdicionarTarefaComponent
+   │     ├── POST /ia/gerar-descricao    → Feature 3
+   │     └── POST /ia/sugerir-prazo     → Feature 2
+   │
+   └── UsuarioDashboardComponent
+         └── POST /usuario/tarefa/{id}/mensagem → Feature 1 (disparo automático)
+
+Spring Boot (Back-end)
+   │
+   ├── AiController        → expõe /ia/**
+   ├── AnthropicService    → gerencia chamadas HTTP para api.anthropic.com
+   └── TarefaService       → chama AnthropicService ao salvar mensagens
+```
+
+---
+
+### Feature 1 — Assistente de mensagens contextual
+
+**Onde:** painel do usuário (`/usuario/dashboard`) → seção de mensagens de cada tarefa  
+**Como funciona:** quando um usuário envia uma dúvida ou comentário sobre uma tarefa, o `TarefaService.enviarMensagem()` invoca automaticamente o `AnthropicService.gerarRespostaParaMensagem()` antes de salvar a entidade, passando o contexto completo da tarefa (título, descrição, prazo, departamento e status). A resposta gerada pela IA é persistida no campo `resposta` da entidade `Mensagem` com `respondida = true` e exibida no front-end com o badge **"Assistente IA"**.
+
+**Arquivos modificados:**
+- `TarefaService.java` — método `enviarMensagem()` (ver PATCH)
+- `AnthropicService.java` — método `gerarRespostaParaMensagem()`
+- `usuario-dashboard.component.html` — bloco `.mensagens-section`
+- `usuario-dashboard.component.scss` — estilos `.msg-ia-resposta`, `.ia-badge`
+
+---
+
+### Feature 2 — Sugestão de prazo com IA
+
+**Onde:** formulário de criação/edição de tarefa (modal `AdicionarTarefaComponent`)  
+**Como funciona:** ao clicar em **"Sugerir com IA"** ao lado do campo de prazo, o Angular chama `POST /ia/sugerir-prazo` enviando título e descrição. O `AnthropicService.sugerirPrazoEmDias()` pede à IA que estime o número de dias necessários para a tarefa. O back-end calcula `LocalDate.now().plusDays(N)` e retorna a data ISO formatada, que é preenchida automaticamente no campo de prazo.
+
+**Arquivos modificados/criados:**
+- `AiController.java` — endpoint `POST /ia/sugerir-prazo`
+- `AnthropicService.java` — método `sugerirPrazoEmDias()`
+- `ia.service.ts` — método `sugerirPrazo()`
+- `adicionar-tarefa.component.ts` — método `sugerirPrazoComIA()`
+- `adicionar-tarefa.component.html` — botão "📅 Sugerir com IA"
+- `adicionar-tarefa.component.scss` — classes `.btn-ia`, `.btn-ia--prazo`
+
+---
+
+### Feature 3 — Geração automática de descrição
+
+**Onde:** formulário de criação/edição de tarefa (modal `AdicionarTarefaComponent`)  
+**Como funciona:** ao clicar em **"Gerar com IA"** ao lado do campo de descrição, o Angular chama `POST /ia/gerar-descricao` enviando apenas o título. O `AnthropicService.gerarDescricao()` instrui a IA a produzir uma descrição profissional de 1 a 2 frases sem markdown. O resultado é preenchido automaticamente no campo descrição.
+
+**Arquivos modificados/criados:**
+- `AiController.java` — endpoint `POST /ia/gerar-descricao`
+- `AnthropicService.java` — método `gerarDescricao()`
+- `ia.service.ts` — método `gerarDescricao()`
+- `adicionar-tarefa.component.ts` — método `gerarDescricaoComIA()`
+- `adicionar-tarefa.component.html` — botão "✨ Gerar com IA"
+- `adicionar-tarefa.component.scss` — classe `.btn-ia`, `.ia-feedback`
+
+---
+
+### Configuração da API Key
+
+A chave da Anthropic é lida via variável de ambiente. Configure-a no Render (ou `.env` local):
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+No `application.properties`, adicione:
+
+```properties
+# =============================================
+# ANTHROPIC (Claude AI)
+# =============================================
+anthropic.api.key=${ANTHROPIC_API_KEY:}
+```
+
+Obtenha sua chave gratuita em: https://console.anthropic.com
+
+> **Nota de segurança:** a chave nunca deve ser commitada no repositório. O campo `anthropic.api.key` usa `:` como fallback vazio, então a aplicação sobe normalmente mesmo sem a variável — apenas as funcionalidades de IA retornam mensagens de fallback.
+
+---
+
+### Novos arquivos criados
+
+| Arquivo | Camada | Propósito |
+|---|---|---|
+| `AnthropicService.java` | Back-end | Chamadas HTTP para a API da Anthropic |
+| `AiController.java` | Back-end | Endpoints REST `/ia/**` |
+| `ia.service.ts` | Front-end | Service Angular para Features 2 e 3 |
+
+### Arquivos modificados
+
+| Arquivo | Modificação |
+|---|---|
+| `TarefaService.java` | Método `enviarMensagem()` chama a IA antes de salvar |
+| `adicionar-tarefa.component.ts` | Métodos `gerarDescricaoComIA()` e `sugerirPrazoComIA()` |
+| `adicionar-tarefa.component.html` | Botões de IA ao lado dos campos |
+| `adicionar-tarefa.component.scss` | Estilos dos botões e feedback de IA |
+| `usuario-dashboard.component.html` | Bloco de mensagens com exibição da resposta IA |
+| `usuario-dashboard.component.scss` | Estilos da bolha de resposta IA |
+| `application.properties` | Nova propriedade `anthropic.api.key` |
