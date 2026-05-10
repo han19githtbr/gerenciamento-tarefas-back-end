@@ -3,6 +3,7 @@ package com.desafio.service;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -465,7 +466,7 @@ public class TarefaService {
 		mensagem.setTarefa(tarefa);
 		mensagem.setRemetenteEmail(remetenteEmail);
 		mensagem.setTexto(texto);
-		mensagem.setDataCriacao(LocalDateTime.now());
+		mensagem.setDataCriacao(LocalDateTime.now(ZoneOffset.UTC));
 		mensagem.setRespondida(false);
 		mensagemRepository.save(mensagem);
 
@@ -492,7 +493,7 @@ public class TarefaService {
 		mensagem.setTarefa(tarefa);
 		mensagem.setRemetenteEmail(remetenteEmail);
 		mensagem.setTexto(texto);
-		mensagem.setDataCriacao(LocalDateTime.now());
+		mensagem.setDataCriacao(LocalDateTime.now(ZoneOffset.UTC));
 		mensagem.setRespondida(false);
 		mensagemRepository.save(mensagem);
 
@@ -519,7 +520,7 @@ public class TarefaService {
 
 			mensagem.setResposta(respostaIA);
 			mensagem.setAdminEmail("ia-assistente@sistema.com");
-			mensagem.setDataResposta(LocalDateTime.now());
+			mensagem.setDataResposta(LocalDateTime.now(ZoneOffset.UTC));
 			mensagem.setRespondida(true);
 			mensagemRepository.save(mensagem);
 
@@ -529,7 +530,7 @@ public class TarefaService {
 			mensagem.setResposta(
 					"Nao consegui gerar uma resposta da IA neste momento. Tente novamente ou envie a mensagem ao administrador.");
 			mensagem.setAdminEmail("ia-assistente@sistema.com");
-			mensagem.setDataResposta(LocalDateTime.now());
+			mensagem.setDataResposta(LocalDateTime.now(ZoneOffset.UTC));
 			mensagem.setRespondida(true);
 			mensagemRepository.save(mensagem);
 		}
@@ -559,7 +560,7 @@ public class TarefaService {
 		}
 		mensagem.setResposta(respostaFinal);
 		mensagem.setAdminEmail(adminEmail);
-		mensagem.setDataResposta(LocalDateTime.now());
+		mensagem.setDataResposta(LocalDateTime.now(ZoneOffset.UTC));
 		mensagem.setRespondida(true);
 
 		mensagemRepository.save(mensagem);

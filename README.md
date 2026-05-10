@@ -115,7 +115,8 @@ O **back-end** expõe uma API REST protegida por JWT (Google OAuth2). O **front-
 - Login com Google (perfil de usuário comum)
 - Visualizar somente as tarefas em que o usuário está alocado
 - Iniciar uma tarefa (muda status para "em andamento")
-- Enviar mensagens/dúvidas ao administrador vinculadas a uma tarefa
+- Enviar mensagens diretamente ao administrador vinculadas a uma tarefa
+- Tirar dúvidas técnicas sobre a tarefa com o assistente de IA contextual
 - Excluir as próprias mensagens
 - Solicitar conclusão antecipada de uma tarefa (notifica o admin para aprovação)
 - Responder notificações de prazo vencido com duas opções: A) Precisar de mais prazo ou B) Não conseguir executar a tarefa
@@ -817,13 +818,14 @@ Angular (Front-end)
    │     └── POST /ia/sugerir-prazo     → Feature 2
    │
    └── UsuarioDashboardComponent
-         └── POST /usuario/tarefa/{id}/mensagem → Feature 1 (disparo automático)
+         ├── POST /usuario/tarefa/{id}/mensagem    → mensagem direta ao admin
+         └── POST /usuario/tarefa/{id}/mensagem/ia → Feature 1 (assistente técnico)
 
 Spring Boot (Back-end)
    │
    ├── AiController        → expõe /ia/**
    ├── AnthropicService    → gerencia chamadas HTTP para api.anthropic.com
-   └── TarefaService       → chama AnthropicService ao salvar mensagens
+   └── TarefaService       → separa mensagens do admin e perguntas para IA
 ```
 
 ---
@@ -831,10 +833,15 @@ Spring Boot (Back-end)
 ### Feature 1 — Assistente de mensagens contextual
 
 **Onde:** painel do usuário (`/usuario/dashboard`) → seção de mensagens de cada tarefa  
-**Como funciona:** quando um usuário envia uma dúvida ou comentário sobre uma tarefa, o `TarefaService.enviarMensagem()` invoca automaticamente o `AnthropicService.gerarRespostaParaMensagem()` antes de salvar a entidade, passando o contexto completo da tarefa (título, descrição, prazo, departamento e status). A resposta gerada pela IA é persistida no campo `resposta` da entidade `Mensagem` com `respondida = true` e exibida no front-end com o badge **"Assistente IA"**.
+**Como funciona:** o painel do usuário possui dois caminhos separados. Ao clicar em **"Enviar ao admin"**, o Angular chama `POST /usuario/tarefa/{id}/mensagem`, o `TarefaService.enviarMensagemParaAdmin()` salva a mensagem com `respondida = false` e notifica o administrador para resposta manual. Ao clicar em **"Perguntar a IA"**, o Angular chama `POST /usuario/tarefa/{id}/mensagem/ia`, o `TarefaService.enviarMensagemParaIa()` monta o contexto técnico da tarefa (título, descrição, prazo, departamento e status) e chama `AnthropicService.gerarRespostaParaMensagem()`. A resposta da IA é persistida no campo `resposta`, marcada com `respondida = true` e identificada por `adminEmail = "ia-assistente@sistema.com"`, permitindo que o front-end exiba o badge **"Assistente IA"** sem deixar a tela em carregamento infinito. Se a API da IA falhar, uma mensagem de fallback é salva como resposta para encerrar o estado de processamento.
+
+**Horários das mensagens:** `dataCriacao` e `dataResposta` são gravadas em UTC no back-end e formatadas no Angular para `America/Sao_Paulo`. Isso evita diferença de três horas quando o servidor está em UTC, como acontece em deploys hospedados fora do fuso do Brasil.
 
 **Arquivos modificados:**
-- `TarefaService.java` — método `enviarMensagem()` (ver PATCH)
+- `TarefaService.java` — métodos `enviarMensagemParaAdmin()` e `enviarMensagemParaIa()`
+- `UserController.java` — endpoints `POST /usuario/tarefa/{id}/mensagem` e `POST /usuario/tarefa/{id}/mensagem/ia`
+- `usuario.service.ts` — métodos `enviarMensagem()` e `enviarMensagemParaIa()`
+- `usuario-dashboard.component.ts` — separação dos estados de envio para admin e IA
 - `AnthropicService.java` — método `gerarRespostaParaMensagem()`
 - `usuario-dashboard.component.html` — bloco `.mensagens-section`
 - `usuario-dashboard.component.scss` — estilos `.msg-ia-resposta`, `.ia-badge`
@@ -906,10 +913,14 @@ Obtenha sua chave gratuita em: https://console.anthropic.com
 
 | Arquivo | Modificação |
 |---|---|
-| `TarefaService.java` | Método `enviarMensagem()` chama a IA antes de salvar |
+| `TarefaService.java` | Separa mensagem direta ao administrador (`enviarMensagemParaAdmin`) e dúvida técnica para IA (`enviarMensagemParaIa`) |
+| `UserController.java` | Expõe endpoints distintos para mensagem ao admin e pergunta para IA |
+| `usuario.service.ts` | Chama `/mensagem` ou `/mensagem/ia` conforme o botão escolhido |
+| `admin-dashboard.component.ts/html` | Formata horário de recebimento das mensagens em `America/Sao_Paulo` |
 | `adicionar-tarefa.component.ts` | Métodos `gerarDescricaoComIA()` e `sugerirPrazoComIA()` |
 | `adicionar-tarefa.component.html` | Botões de IA ao lado dos campos |
 | `adicionar-tarefa.component.scss` | Estilos dos botões e feedback de IA |
-| `usuario-dashboard.component.html` | Bloco de mensagens com exibição da resposta IA |
+| `usuario-dashboard.component.html` | Bloco de mensagens com botões separados para admin e IA |
+| `usuario-dashboard.component.ts` | Controla estados de envio e formata horários em `America/Sao_Paulo` |
 | `usuario-dashboard.component.scss` | Estilos da bolha de resposta IA |
 | `application.properties` | Nova propriedade `anthropic.api.key` |
