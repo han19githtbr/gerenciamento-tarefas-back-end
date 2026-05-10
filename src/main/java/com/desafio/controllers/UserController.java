@@ -80,6 +80,27 @@ public class UserController {
         }
     }
 
+    @PostMapping("/tarefa/{id}/mensagem/ia")
+    public ResponseEntity<?> enviarMensagemParaIa(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
+        String email = auth.getName();
+        String texto = body.get("texto");
+        if (texto == null || texto.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "O campo 'texto' e obrigatorio."));
+        }
+        try {
+            Object resultado = tarefaService.enviarMensagemParaIa(id, email, texto);
+            return ResponseEntity.ok(resultado);
+        } catch (javax.persistence.EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(Map.of("erro", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar mensagem para IA: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("erro", "Erro interno ao enviar mensagem para IA."));
+        }
+    }
+
     @PostMapping("/notificacao/{notifId}/responder-vencimento")
     public ResponseEntity<?> responderVencimento(
             @PathVariable Long notifId,

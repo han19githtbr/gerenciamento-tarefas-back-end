@@ -454,8 +454,12 @@ public class TarefaService {
 	 */
 
 	public Object enviarMensagem(Long tarefaId, String remetenteEmail, String texto) {
+		return enviarMensagemParaAdmin(tarefaId, remetenteEmail, texto);
+	}
+
+	public Object enviarMensagemParaAdmin(Long tarefaId, String remetenteEmail, String texto) {
 		Tarefa tarefa = tarefaRepository.findById(tarefaId)
-				.orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada."));
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa nao encontrada."));
 
 		Mensagem mensagem = new Mensagem();
 		mensagem.setTarefa(tarefa);
@@ -463,10 +467,35 @@ public class TarefaService {
 		mensagem.setTexto(texto);
 		mensagem.setDataCriacao(LocalDateTime.now());
 		mensagem.setRespondida(false);
-
 		mensagemRepository.save(mensagem);
 
-		// ── Feature 1: Resposta automática via IA ──────────────────────────
+		notificacaoService.criarNotificacaoParaAdmin(
+				tarefaId,
+				"Nova mensagem de " + remetenteEmail + " na tarefa \"" + tarefa.getTitulo() + "\"");
+
+		return java.util.Map.of(
+				"id", mensagem.getId(),
+				"tarefaId", tarefaId,
+				"remetenteEmail", remetenteEmail,
+				"texto", texto,
+				"dataCriacao", mensagem.getDataCriacao().toString(),
+				"respondida", false,
+				"resposta", "",
+				"adminEmail", "");
+	}
+
+	public Object enviarMensagemParaIa(Long tarefaId, String remetenteEmail, String texto) {
+		Tarefa tarefa = tarefaRepository.findById(tarefaId)
+				.orElseThrow(() -> new EntityNotFoundException("Tarefa nao encontrada."));
+
+		Mensagem mensagem = new Mensagem();
+		mensagem.setTarefa(tarefa);
+		mensagem.setRemetenteEmail(remetenteEmail);
+		mensagem.setTexto(texto);
+		mensagem.setDataCriacao(LocalDateTime.now());
+		mensagem.setRespondida(false);
+		mensagemRepository.save(mensagem);
+
 		try {
 			String departamento = tarefa.getDepartamento() != null
 					? tarefa.getDepartamento().getTitulo()
@@ -478,7 +507,7 @@ public class TarefaService {
 
 			String prazoStr = tarefa.getPrazo() != null
 					? tarefa.getPrazo().toString()
-					: "Não definido";
+					: "Nao definido";
 
 			String respostaIA = anthropicService.gerarRespostaParaMensagem(
 					tarefa.getTitulo(),
@@ -491,25 +520,19 @@ public class TarefaService {
 			mensagem.setResposta(respostaIA);
 			mensagem.setAdminEmail("ia-assistente@sistema.com");
 			mensagem.setDataResposta(LocalDateTime.now());
-			// Não marca como respondida para que o administrador veja e responda à mensagem
-			mensagem.setRespondida(false);
+			mensagem.setRespondida(true);
 			mensagemRepository.save(mensagem);
 
-			notificacaoService.criarNotificacaoParaAdmin(
-					tarefaId,
-					"Nova mensagem de " + remetenteEmail + " na tarefa \"" + tarefa.getTitulo() + "\"");
-
-			log.info("[IA] Resposta automática gerada para tarefa id={}", tarefaId);
-
+			log.info("[IA] Resposta automatica gerada para tarefa id={}", tarefaId);
 		} catch (Exception e) {
-			// Garante que a mensagem é salva mesmo se a IA falhar
-			log.error("[IA] Erro ao gerar resposta automática: {}", e.getMessage());
-			// Notifica o admin manualmente como fallback
-			notificacaoService.criarNotificacaoParaAdmin(
-					tarefaId,
-					"Nova mensagem de " + remetenteEmail + " na tarefa \"" + tarefa.getTitulo() + "\"");
+			log.error("[IA] Erro ao gerar resposta automatica: {}", e.getMessage());
+			mensagem.setResposta(
+					"Nao consegui gerar uma resposta da IA neste momento. Tente novamente ou envie a mensagem ao administrador.");
+			mensagem.setAdminEmail("ia-assistente@sistema.com");
+			mensagem.setDataResposta(LocalDateTime.now());
+			mensagem.setRespondida(true);
+			mensagemRepository.save(mensagem);
 		}
-		// ── Fim Feature 1 ──────────────────────────────────────────────────
 
 		return java.util.Map.of(
 				"id", mensagem.getId(),
@@ -519,9 +542,9 @@ public class TarefaService {
 				"dataCriacao", mensagem.getDataCriacao().toString(),
 				"respondida", mensagem.isRespondida(),
 				"resposta", mensagem.getResposta() != null ? mensagem.getResposta() : "",
+				"adminEmail", mensagem.getAdminEmail(),
 				"iaRespondida", mensagem.getResposta() != null && !mensagem.getResposta().isBlank());
 	}
-
 	public Object responderMensagem(Long mensagemId, String adminEmail, String resposta) {
 		Mensagem mensagem = mensagemRepository.findById(mensagemId)
 				.orElseThrow(() -> new EntityNotFoundException("Mensagem n\u00e3o encontrada."));

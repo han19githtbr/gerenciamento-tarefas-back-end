@@ -131,6 +131,8 @@ public class Tarefa {
                         msgMap.put("dataCriacao", m.getDataCriacao() != null ? m.getDataCriacao().toString() : null);
                         msgMap.put("respondida", m.isRespondida());
                         msgMap.put("resposta", m.getResposta());
+                        msgMap.put("adminEmail", m.getAdminEmail());
+                        msgMap.put("respondidaPorIa", "ia-assistente@sistema.com".equals(m.getAdminEmail()));
                         msgMap.put("dataResposta", m.getDataResposta() != null ? m.getDataResposta().toString() : null);
                         return msgMap;
                     })
