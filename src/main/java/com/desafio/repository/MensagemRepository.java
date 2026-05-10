@@ -10,5 +10,8 @@ public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
 
     List<Mensagem> findByTarefaId(Long tarefaId);
 
-    List<Mensagem> findByRespondidaFalse(); // ← ADICIONAR
+    List<Mensagem> findByRespondidaFalse();
+
+    // Busca mensagens respondidas apenas pela IA ou não respondidas
+    List<Mensagem> findByRespondidaFalseOrAdminEmailEquals(String iaEmail);
 }

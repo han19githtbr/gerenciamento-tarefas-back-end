@@ -16,9 +16,9 @@ import java.time.Duration;
  * Serviço de integração com a API da Anthropic (Claude).
  *
  * Responsável pelas três funcionalidades de IA:
- *  1. Resposta automática a mensagens de tarefas (assistente contextual)
- *  2. Sugestão de prazo com base em título e descrição
- *  3. Geração automática de descrição a partir do título
+ * 1. Resposta automática a mensagens de tarefas (assistente contextual)
+ * 2. Sugestão de prazo com base em título e descrição
+ * 3. Geração automática de descrição a partir do título
  *
  * A chave de API é lida da variável de ambiente ANTHROPIC_API_KEY.
  */
@@ -26,16 +26,16 @@ import java.time.Duration;
 @Service
 public class AnthropicService {
 
-    private static final String ANTHROPIC_URL  = "https://api.anthropic.com/v1/messages";
-    private static final String MODEL          = "claude-sonnet-4-20250514";
-    private static final String API_VERSION    = "2023-06-01";
-    private static final int    MAX_TOKENS     = 400;
-    private static final int    TIMEOUT_SECS   = 20;
+    private static final String ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+    private static final String MODEL = "claude-sonnet-4-20250514";
+    private static final String API_VERSION = "2023-06-01";
+    private static final int MAX_TOKENS = 400;
+    private static final int TIMEOUT_SECS = 20;
 
     @Value("${anthropic.api.key:}")
     private String apiKey;
 
-    private final HttpClient    httpClient = HttpClient.newBuilder()
+    private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(TIMEOUT_SECS))
             .build();
 
@@ -49,11 +49,12 @@ public class AnthropicService {
      * Gera uma resposta automática para a mensagem enviada pelo usuário,
      * usando o contexto completo da tarefa (título, descrição, prazo, status).
      *
-     * @param tarefaTitulo   Título da tarefa
+     * @param tarefaTitulo    Título da tarefa
      * @param tarefaDescricao Descrição da tarefa
-     * @param prazo          Prazo no formato ISO (yyyy-MM-dd)
-     * @param departamento   Nome do departamento
-     * @param status         Status atual ("Pendente", "Em Andamento", "Finalizada")
+     * @param prazo           Prazo no formato ISO (yyyy-MM-dd)
+     * @param departamento    Nome do departamento
+     * @param status          Status atual ("Pendente", "Em Andamento",
+     *                        "Finalizada")
      * @param perguntaUsuario Texto da mensagem enviada pelo usuário
      * @return Resposta gerada pela IA, ou mensagem de fallback em caso de erro
      */
@@ -66,19 +67,18 @@ public class AnthropicService {
             String perguntaUsuario) {
 
         String prompt = String.format(
-            "Você é um assistente de gerenciamento de tarefas. Responda em português, " +
-            "de forma objetiva e útil, como se fosse um coordenador experiente. " +
-            "Não use markdown, listas ou formatação especial — texto simples apenas.\n\n" +
-            "Contexto da tarefa:\n" +
-            "- Título: %s\n" +
-            "- Descrição: %s\n" +
-            "- Prazo: %s\n" +
-            "- Departamento: %s\n" +
-            "- Status: %s\n\n" +
-            "Mensagem do colaborador: \"%s\"\n\n" +
-            "Responda de forma direta e prática em no máximo 3 parágrafos.",
-            tarefaTitulo, tarefaDescricao, prazo, departamento, status, perguntaUsuario
-        );
+                "Você é um assistente de gerenciamento de tarefas. Responda em português, " +
+                        "de forma objetiva e útil, como se fosse um coordenador experiente. " +
+                        "Não use markdown, listas ou formatação especial — texto simples apenas.\n\n" +
+                        "Contexto da tarefa:\n" +
+                        "- Título: %s\n" +
+                        "- Descrição: %s\n" +
+                        "- Prazo: %s\n" +
+                        "- Departamento: %s\n" +
+                        "- Status: %s\n\n" +
+                        "Mensagem do colaborador: \"%s\"\n\n" +
+                        "Responda de forma direta e prática em no máximo 3 parágrafos.",
+                tarefaTitulo, tarefaDescricao, prazo, departamento, status, perguntaUsuario);
 
         return chamarAPI(prompt, "Obrigado pela sua mensagem. O administrador irá analisá-la em breve.");
     }
@@ -97,17 +97,17 @@ public class AnthropicService {
      */
     public String sugerirPrazoEmDias(String titulo, String descricao) {
         String prompt = String.format(
-            "Você é um especialista em gerenciamento de projetos. " +
-            "Com base no título e descrição abaixo, estime quantos dias corridos " +
-            "seriam necessários para concluir essa tarefa. " +
-            "Responda APENAS com o número inteiro de dias, sem texto adicional, " +
-            "sem unidade, sem ponto final. Exemplo de resposta válida: 5\n\n" +
-            "Título: %s\nDescrição: %s",
-            titulo, descricao
-        );
+                "Você é um especialista em gerenciamento de projetos. " +
+                        "Com base no título e descrição abaixo, estime quantos dias corridos " +
+                        "seriam necessários para concluir essa tarefa. " +
+                        "Responda APENAS com o número inteiro de dias, sem texto adicional, " +
+                        "sem unidade, sem ponto final. Exemplo de resposta válida: 5\n\n" +
+                        "Título: %s\nDescrição: %s",
+                titulo, descricao);
 
         String raw = chamarAPI(prompt, "7").trim().replaceAll("[^0-9]", "");
-        if (raw.isEmpty()) return "7";
+        if (raw.isEmpty())
+            return "7";
 
         try {
             int dias = Integer.parseInt(raw);
@@ -131,15 +131,14 @@ public class AnthropicService {
      */
     public String gerarDescricao(String titulo) {
         String prompt = String.format(
-            "Você é um analista de projetos. Com base no título de tarefa abaixo, " +
-            "escreva uma descrição profissional e objetiva para ela. " +
-            "A descrição deve ter entre 1 e 2 frases, explicar o objetivo da tarefa " +
-            "e o que se espera como entrega. Não use markdown. Texto simples apenas.\n\n" +
-            "Título: %s",
-            titulo
-        );
+                "Você é um analista de projetos. Com base no título de tarefa abaixo, " +
+                        "escreva uma descrição profissional e objetiva para ela. " +
+                        "A descrição deve ter entre 1 e 2 frases, explicar o objetivo da tarefa " +
+                        "e o que se espera como entrega. Não use markdown. Texto simples apenas.\n\n" +
+                        "Título: %s",
+                titulo);
 
-        return chamarAPI(prompt, "Descrição gerada automaticamente para a tarefa: " + titulo);
+        return chamarAPI(prompt, titulo);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -161,9 +160,8 @@ public class AnthropicService {
                     .replace("\r", "");
 
             String body = String.format(
-                "{\"model\":\"%s\",\"max_tokens\":%d,\"messages\":[{\"role\":\"user\",\"content\":\"%s\"}]}",
-                MODEL, MAX_TOKENS, promptEscapado
-            );
+                    "{\"model\":\"%s\",\"max_tokens\":%d,\"messages\":[{\"role\":\"user\",\"content\":\"%s\"}]}",
+                    MODEL, MAX_TOKENS, promptEscapado);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(ANTHROPIC_URL))

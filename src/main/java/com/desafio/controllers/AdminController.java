@@ -60,7 +60,9 @@ public class AdminController {
 
     @GetMapping("/mensagens/pendentes")
     public List<Map<String, Object>> getMensagensPendentes() {
-        List<Mensagem> mensagens = mensagemRepository.findByRespondidaFalse();
+        // Busca mensagens não respondidas OU respondidas apenas pela IA
+        List<Mensagem> mensagens = mensagemRepository
+                .findByRespondidaFalseOrAdminEmailEquals("ia-assistente@sistema.com");
         List<Map<String, Object>> result = new java.util.ArrayList<>();
         for (Mensagem m : mensagens) {
             Map<String, Object> dto = new java.util.LinkedHashMap<>();
