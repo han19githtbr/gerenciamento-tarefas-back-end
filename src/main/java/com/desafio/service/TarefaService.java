@@ -491,8 +491,13 @@ public class TarefaService {
 			mensagem.setResposta(respostaIA);
 			mensagem.setAdminEmail("ia-assistente@sistema.com");
 			mensagem.setDataResposta(LocalDateTime.now());
-			mensagem.setRespondida(true);
+			// Não marca como respondida para que o administrador veja e responda à mensagem
+			mensagem.setRespondida(false);
 			mensagemRepository.save(mensagem);
+
+			notificacaoService.criarNotificacaoParaAdmin(
+					tarefaId,
+					"Nova mensagem de " + remetenteEmail + " na tarefa \"" + tarefa.getTitulo() + "\"");
 
 			log.info("[IA] Resposta automática gerada para tarefa id={}", tarefaId);
 
@@ -514,7 +519,7 @@ public class TarefaService {
 				"dataCriacao", mensagem.getDataCriacao().toString(),
 				"respondida", mensagem.isRespondida(),
 				"resposta", mensagem.getResposta() != null ? mensagem.getResposta() : "",
-				"iaRespondida", mensagem.isRespondida());
+				"iaRespondida", mensagem.getResposta() != null && !mensagem.getResposta().isBlank());
 	}
 
 	public Object responderMensagem(Long mensagemId, String adminEmail, String resposta) {
@@ -525,7 +530,11 @@ public class TarefaService {
 			throw new IllegalStateException("Esta mensagem j\u00e1 foi respondida.");
 		}
 
-		mensagem.setResposta(resposta);
+		String respostaFinal = resposta;
+		if (mensagem.getResposta() != null && !mensagem.getResposta().isBlank()) {
+			respostaFinal = mensagem.getResposta() + "\n\nResposta do admin: " + resposta;
+		}
+		mensagem.setResposta(respostaFinal);
 		mensagem.setAdminEmail(adminEmail);
 		mensagem.setDataResposta(LocalDateTime.now());
 		mensagem.setRespondida(true);
