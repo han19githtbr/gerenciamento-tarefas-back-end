@@ -925,4 +925,4 @@ Obtenha sua chave gratuita em: https://console.anthropic.com
 | `usuario-dashboard.component.scss` | Estilos da bolha de resposta IA |
 | `application.properties` | Nova propriedade `anthropic.api.key` |
 
-[![My Skills](https://skillicons.dev/icons?i=java,springboot)](https://skillicons.dev)
+[![My Skills](https://skillicons.dev/icons?i=java,ia)](https://skillicons.dev)
