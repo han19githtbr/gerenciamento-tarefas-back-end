@@ -597,6 +597,7 @@ Em produção, a variável de ambiente `CORS_ALLOWED_ORIGINS` restringe as orige
 |--------|------|-----------|
 | `GET` | `/usuario/minhas-tarefas` | Tarefas do usuário logado |
 | `POST` | `/usuario/tarefa/{id}/mensagem` | Enviar mensagem ao admin |
+| `POST` | `/usuario/tarefa/{id}/mensagem/ia` | Enviar dúvida técnica ao assistente de IA (Feature 1), com memória do histórico da tarefa |
 | `POST` | `/usuario/tarefa/{tarefaId}/notificar-conclusao` | Solicitar aprovação de conclusão |
 | `POST` | `/usuario/notificacao/{notifId}/responder-vencimento` | Responder notificação de prazo vencido (opção A ou B) |
 | `PUT` | `/usuario/iniciar-tarefa/{tarefaId}` | Iniciar tarefa |
@@ -609,6 +610,13 @@ Em produção, a variável de ambiente `CORS_ALLOWED_ORIGINS` restringe as orige
 | `GET` | `/notificacoes/conclusao-pendentes` | Notificações de conclusão pendente (admin) |
 | `PUT` | `/notificacoes/ler/{id}` | Marcar notificação como lida |
 | `PUT` | `/notificacoes/aprovar-conclusao/{id}` | Aprovar conclusão antecipada |
+
+### Inteligência Artificial (`/ia`)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `POST` | `/ia/gerar-descricao` | Gera descrição contextual a partir do título **e do departamento** da tarefa (Feature 3) |
+| `POST` | `/ia/sugerir-prazo` | Estima dias, **nível de complexidade** e justificativa a partir de título, descrição e departamento (Feature 2) |
+| `POST` | `/ia/responder-mensagem` | Endpoint avulso para testar a Feature 1 fora do fluxo automático do `TarefaService` |
 
 ---
 
@@ -806,7 +814,7 @@ src/app/
 
 ## 🤖 Integração com Inteligência Artificial (Anthropic Claude)
 
-Esta aplicação integra a **API da Anthropic (Claude)** para automatizar três operações do sistema de gerenciamento de tarefas. A integração é gratuita nos créditos iniciais da plataforma e demonstra uso real de LLM em contexto de produção.
+Esta aplicação integra a **API da Anthropic (Claude)** para automatizar três operações do sistema de gerenciamento de tarefas. As três features usam **contexto real da tarefa** (departamento, histórico de mensagens, equipe alocada) em vez de depender apenas do texto isolado digitado pelo usuário — isso é o que faz a IA raciocinar sobre o problema em vez de apenas ecoar o que foi digitado.
 
 ### Arquitetura da integração
 
@@ -814,67 +822,92 @@ Esta aplicação integra a **API da Anthropic (Claude)** para automatizar três 
 Angular (Front-end)
    │
    ├── AdicionarTarefaComponent
-   │     ├── POST /ia/gerar-descricao    → Feature 3
-   │     └── POST /ia/sugerir-prazo     → Feature 2
+   │     ├── POST /ia/gerar-descricao  → Feature 3 (título + departamento)
+   │     └── POST /ia/sugerir-prazo    → Feature 2 (título + descrição + departamento)
    │
    └── UsuarioDashboardComponent
          ├── POST /usuario/tarefa/{id}/mensagem    → mensagem direta ao admin
-         └── POST /usuario/tarefa/{id}/mensagem/ia → Feature 1 (assistente técnico)
+         └── POST /usuario/tarefa/{id}/mensagem/ia → Feature 1 (assistente técnico com memória)
 
 Spring Boot (Back-end)
    │
-   ├── AiController        → expõe /ia/**
-   ├── AnthropicService    → gerencia chamadas HTTP para api.anthropic.com
-   └── TarefaService       → separa mensagens do admin e perguntas para IA
+   ├── AiController        → expõe /ia/** e injeta o departamento nas duas features do formulário
+   ├── AnthropicService    → monta prompts (system + user), chama api.anthropic.com e interpreta
+   │                          respostas estruturadas (JSON) para prazo/complexidade
+   └── TarefaService       → enriquece a Feature 1 com histórico de mensagens da própria tarefa
+                              (tarefa.getMensagens()) e com a equipe alocada (tarefa.getAlocacoes())
+                              antes de chamar o AnthropicService — sem precisar de nada vindo do front
 ```
 
+**Modelo utilizado:** `claude-sonnet-5` (modelo Sonnet atual da Anthropic; a versão anterior do projeto usava o snapshot legado `claude-sonnet-4-20250514`).
+
+**Chamada à API:** o corpo da requisição HTTP passou a ser montado com `ObjectMapper` (em vez de `String.format` com escape manual de aspas), o que elimina o risco de JSON quebrado quando o título, a descrição ou a mensagem do usuário contêm aspas, quebras de linha ou caracteres especiais. Cada chamada agora também separa claramente o **system prompt** (papel e regras que a IA deve seguir) do **conteúdo do usuário** (dados da tarefa), e define uma `temperature` adequada ao tipo de resposta: mais baixa (~0.2–0.3) para a estimativa de prazo, que precisa ser consistente, e moderada (~0.6–0.7) para descrição e mensagens, que precisam soar naturais.
+
 ---
 
-### Feature 1 — Assistente de mensagens contextual
+### Feature 1 — Assistente de mensagens contextual (com memória da conversa)
 
 **Onde:** painel do usuário (`/usuario/dashboard`) → seção de mensagens de cada tarefa  
-**Como funciona:** o painel do usuário possui dois caminhos separados. Ao clicar em **"Enviar ao admin"**, o Angular chama `POST /usuario/tarefa/{id}/mensagem`, o `TarefaService.enviarMensagemParaAdmin()` salva a mensagem com `respondida = false` e notifica o administrador para resposta manual. Ao clicar em **"Perguntar a IA"**, o Angular chama `POST /usuario/tarefa/{id}/mensagem/ia`, o `TarefaService.enviarMensagemParaIa()` monta o contexto técnico da tarefa (título, descrição, prazo, departamento e status) e chama `AnthropicService.gerarRespostaParaMensagem()`. A resposta da IA é persistida no campo `resposta`, marcada com `respondida = true` e identificada por `adminEmail = "ia-assistente@sistema.com"`, permitindo que o front-end exiba o badge **"Assistente IA"** sem deixar a tela em carregamento infinito. Se a API da IA falhar, uma mensagem de fallback é salva como resposta para encerrar o estado de processamento.
+**Como funciona:** o painel do usuário possui dois caminhos separados. Ao clicar em **"Enviar ao admin"**, o Angular chama `POST /usuario/tarefa/{id}/mensagem`, o `TarefaService.enviarMensagemParaAdmin()` salva a mensagem com `respondida = false` e notifica o administrador para resposta manual. Ao clicar em **"Perguntar a IA"**, o Angular chama `POST /usuario/tarefa/{id}/mensagem/ia` e o `TarefaService.enviarMensagemParaIa()` monta o contexto completo antes de chamar `AnthropicService.gerarRespostaParaMensagem()`:
 
-**Horários das mensagens:** `dataCriacao` e `dataResposta` são gravadas em UTC no back-end e formatadas no Angular para `America/Sao_Paulo`. Isso evita diferença de três horas quando o servidor está em UTC, como acontece em deploys hospedados fora do fuso do Brasil.
+- **Dados da tarefa:** título, descrição, prazo, departamento e status (como já acontecia antes);
+- **Histórico da conversa:** as últimas mensagens já respondidas dessa mesma tarefa (`tarefa.getMensagens()`), formatadas como pares pergunta/resposta, para que a IA não repita informações já dadas e mantenha continuidade entre perguntas de um mesmo colaborador;
+- **Equipe alocada:** os nomes das pessoas alocadas na tarefa (`tarefa.getAlocacoes()`), para que a IA possa fazer referência à equipe quando fizer sentido (ex.: "isso pode ser combinado com quem mais está alocado na tarefa").
+
+A resposta da IA é persistida no campo `resposta`, marcada com `respondida = true` e identificada por `adminEmail = "ia-assistente@sistema.com"`, permitindo que o front-end exiba o badge **"Assistente IA"** sem deixar a tela em carregamento infinito. Se a API da IA falhar, uma mensagem de fallback é salva como resposta para encerrar o estado de processamento.
+
+**Horários das mensagens:** `dataCriacao` e `dataResposta` são gravadas em UTC no back-end e formatadas no Angular para `America/Sao_Paulo`.
 
 **Arquivos modificados:**
-- `TarefaService.java` — métodos `enviarMensagemParaAdmin()` e `enviarMensagemParaIa()`
-- `UserController.java` — endpoints `POST /usuario/tarefa/{id}/mensagem` e `POST /usuario/tarefa/{id}/mensagem/ia`
-- `usuario.service.ts` — métodos `enviarMensagem()` e `enviarMensagemParaIa()`
-- `usuario-dashboard.component.ts` — separação dos estados de envio para admin e IA
-- `AnthropicService.java` — método `gerarRespostaParaMensagem()`
-- `usuario-dashboard.component.html` — bloco `.mensagens-section`
-- `usuario-dashboard.component.scss` — estilos `.msg-ia-resposta`, `.ia-badge`
+- `TarefaService.java` — `enviarMensagemParaIa()` passa a montar o histórico da conversa e a lista da equipe alocada antes de chamar o `AnthropicService`
+- `AnthropicService.java` — `gerarRespostaParaMensagem()` recebe os novos parâmetros `historicoConversa` e `equipeAlocada`, com o papel da IA movido para um `system prompt` dedicado
+- `UserController.java`, `usuario.service.ts`, `usuario-dashboard.component.ts/html/scss` — sem mudança de contrato; a melhoria é totalmente interna ao back-end
 
 ---
 
-### Feature 2 — Sugestão de prazo com IA
+### Feature 2 — Sugestão de prazo com IA (baseada em complexidade real)
 
 **Onde:** formulário de criação/edição de tarefa (modal `AdicionarTarefaComponent`)  
-**Como funciona:** ao clicar em **"Sugerir com IA"** ao lado do campo de prazo, o Angular chama `POST /ia/sugerir-prazo` enviando título e descrição. O `AnthropicService.sugerirPrazoEmDias()` pede à IA que estime o número de dias necessários para a tarefa. O back-end calcula `LocalDate.now().plusDays(N)` e retorna a data ISO formatada, que é preenchida automaticamente no campo de prazo.
+**Como funciona:** ao clicar em **"Sugerir com IA"**, o Angular chama `POST /ia/sugerir-prazo` enviando **título, descrição e o nome do departamento selecionado**. Em vez de pedir apenas "quantos dias", o `AnthropicService` instrui a IA a primeiro classificar a complexidade da tarefa (`Simples`, `Média`, `Complexa` ou `Muito complexa`) considerando o domínio do departamento, e só então responder em **JSON estruturado**:
+
+```json
+{ "dias": 12, "complexidade": "Complexa", "justificativa": "Envolve integração entre múltiplos sistemas" }
+```
+
+O back-end faz o parse desse JSON com `ObjectMapper` (com um fallback por regex caso a IA responda fora do formato esperado), calcula `LocalDate.now().plusDays(dias)` e devolve tudo ao front-end — que agora mostra não só a data sugerida, mas também a complexidade percebida e a justificativa, tornando a sugestão auditável em vez de uma "caixa-preta".
+
+**Resposta do endpoint (novo formato):**
+```json
+{ "diasSugeridos": 12, "prazoSugerido": "2026-09-20", "complexidade": "Complexa", "justificativa": "Envolve integração entre múltiplos sistemas" }
+```
 
 **Arquivos modificados/criados:**
-- `AiController.java` — endpoint `POST /ia/sugerir-prazo`
-- `AnthropicService.java` — método `sugerirPrazoEmDias()`
-- `ia.service.ts` — método `sugerirPrazo()`
-- `adicionar-tarefa.component.ts` — método `sugerirPrazoComIA()`
-- `adicionar-tarefa.component.html` — botão "📅 Sugerir com IA"
-- `adicionar-tarefa.component.scss` — classes `.btn-ia`, `.btn-ia--prazo`
+- `AiController.java` — `/ia/sugerir-prazo` passa a aceitar `departamento` no corpo e a devolver `complexidade`/`justificativa`
+- `AnthropicService.java` — `sugerirPrazoEmDias()` evolui para `sugerirPrazoDetalhado()`, com prompt de raciocínio por complexidade e saída em JSON
+- `ia.service.ts` — `sugerirPrazo()` envia o departamento e o tipo `SugerirPrazoResponse` ganha `complexidade` e `justificativa`
+- `adicionar-tarefa.component.ts` — `sugerirPrazoComIA()` resolve o nome do departamento selecionado e exibe complexidade/justificativa na mensagem de feedback
+- `adicionar-tarefa.component.html`/`.scss` — sem mudança estrutural obrigatória; o texto adicional aparece no bloco `.ia-feedback` já existente
 
 ---
 
-### Feature 3 — Geração automática de descrição
+### Feature 3 — Geração automática de descrição (contextual, não repete o título)
 
 **Onde:** formulário de criação/edição de tarefa (modal `AdicionarTarefaComponent`)  
-**Como funciona:** ao clicar em **"Gerar com IA"** ao lado do campo de descrição, o Angular chama `POST /ia/gerar-descricao` enviando apenas o título. O `AnthropicService.gerarDescricao()` instrui a IA a produzir uma descrição profissional de 1 a 2 frases sem markdown. O resultado é preenchido automaticamente no campo descrição.
+**Como funciona:** ao clicar em **"Gerar com IA"**, o Angular chama `POST /ia/gerar-descricao` enviando o **título e o departamento selecionado**. O prompt foi reescrito para instruir a IA a interpretar o domínio da tarefa a partir do departamento e do título — em vez de apenas reformular o título — cobrindo em 2 a 3 frases: o que precisa ser feito, o contexto/domínio técnico envolvido e o critério de conclusão esperado. É explicitamente proibido que a IA apenas repita o título literalmente.
+
+O back-end também passou a **validar a resposta da IA**: se a chave da API não estiver configurada, a chamada falhar, ou a resposta vier vazia/idêntica ao título, o endpoint devolve `"gerado": false` junto de uma descrição de fallback — o front-end usa esse campo para mostrar um aviso real ("⚠️ IA indisponível, escreva a descrição manualmente") em vez de exibir "✅ Descrição gerada com sucesso" para um texto que é só o título repetido.
+
+**Resposta do endpoint (novo formato):**
+```json
+{ "descricao": "Implementar o módulo de upload de arquivos com validação de tipo e tamanho...", "gerado": true }
+```
 
 **Arquivos modificados/criados:**
-- `AiController.java` — endpoint `POST /ia/gerar-descricao`
-- `AnthropicService.java` — método `gerarDescricao()`
-- `ia.service.ts` — método `gerarDescricao()`
-- `adicionar-tarefa.component.ts` — método `gerarDescricaoComIA()`
-- `adicionar-tarefa.component.html` — botão "✨ Gerar com IA"
-- `adicionar-tarefa.component.scss` — classe `.btn-ia`, `.ia-feedback`
+- `AiController.java` — `/ia/gerar-descricao` passa a aceitar `departamento` e a devolver `gerado`
+- `AnthropicService.java` — `gerarDescricao()` recebe `departamento`, usa `system prompt` dedicado e valida se a saída não é apenas o título repetido
+- `ia.service.ts` — `gerarDescricao()` envia o departamento e o tipo `GerarDescricaoResponse` ganha `gerado: boolean`
+- `adicionar-tarefa.component.ts` — `gerarDescricaoComIA()` resolve o nome do departamento selecionado e trata `gerado === false` como aviso, não sucesso
+- `adicionar-tarefa.component.html`/`.scss` — sem mudança estrutural obrigatória
 
 ---
 
@@ -895,9 +928,9 @@ No `application.properties`, adicione:
 anthropic.api.key=${ANTHROPIC_API_KEY:}
 ```
 
-Obtenha sua chave gratuita em: https://console.anthropic.com
+Obtenha sua chave em: https://console.anthropic.com
 
-> **Nota de segurança:** a chave nunca deve ser commitada no repositório. O campo `anthropic.api.key` usa `:` como fallback vazio, então a aplicação sobe normalmente mesmo sem a variável — apenas as funcionalidades de IA retornam mensagens de fallback.
+> **Nota de segurança:** a chave nunca deve ser commitada no repositório. O campo `anthropic.api.key` usa `:` como fallback vazio, então a aplicação sobe normalmente mesmo sem a variável — apenas as funcionalidades de IA retornam respostas de fallback, agora sinalizadas explicitamente (`gerado: false`) para o front-end não confundir fallback com sucesso.
 
 ---
 
@@ -905,7 +938,7 @@ Obtenha sua chave gratuita em: https://console.anthropic.com
 
 | Arquivo | Camada | Propósito |
 |---|---|---|
-| `AnthropicService.java` | Back-end | Chamadas HTTP para a API da Anthropic |
+| `AnthropicService.java` | Back-end | Chamadas HTTP para a API da Anthropic, com system prompt, temperature por caso de uso e parsing de JSON estruturado |
 | `AiController.java` | Back-end | Endpoints REST `/ia/**` |
 | `ia.service.ts` | Front-end | Service Angular para Features 2 e 3 |
 
@@ -913,16 +946,19 @@ Obtenha sua chave gratuita em: https://console.anthropic.com
 
 | Arquivo | Modificação |
 |---|---|
-| `TarefaService.java` | Separa mensagem direta ao administrador (`enviarMensagemParaAdmin`) e dúvida técnica para IA (`enviarMensagemParaIa`) |
+| `AnthropicService.java` | Prompts reescritos com contexto de departamento, histórico de conversa e equipe alocada; saída estruturada em JSON para prazo/complexidade; validação de resposta idêntica ao título; modelo atualizado para `claude-sonnet-5`; requisição HTTP montada via `ObjectMapper` |
+| `AiController.java` | `/ia/gerar-descricao` e `/ia/sugerir-prazo` passam a aceitar `departamento` e a devolver `gerado`, `complexidade` e `justificativa` |
+| `TarefaService.java` | `enviarMensagemParaIa()` monta histórico de mensagens e equipe alocada antes de chamar a IA; separa mensagem direta ao administrador (`enviarMensagemParaAdmin`) de dúvida técnica para IA (`enviarMensagemParaIa`) |
 | `UserController.java` | Expõe endpoints distintos para mensagem ao admin e pergunta para IA |
+| `ia.service.ts` | `gerarDescricao()` e `sugerirPrazo()` enviam o departamento selecionado e tratam os novos campos da resposta |
 | `usuario.service.ts` | Chama `/mensagem` ou `/mensagem/ia` conforme o botão escolhido |
-| `admin-dashboard.component.ts/html` | Formata horário de recebimento das mensagens em `America/Sao_Paulo` |
-| `adicionar-tarefa.component.ts` | Métodos `gerarDescricaoComIA()` e `sugerirPrazoComIA()` |
+| `adicionar-tarefa.component.ts` | Resolve o departamento selecionado para enviar às Features 2 e 3; trata `gerado: false` como aviso; exibe complexidade/justificativa do prazo sugerido |
 | `adicionar-tarefa.component.html` | Botões de IA ao lado dos campos |
 | `adicionar-tarefa.component.scss` | Estilos dos botões e feedback de IA |
+| `admin-dashboard.component.ts/html` | Formata horário de recebimento das mensagens em `America/Sao_Paulo` |
 | `usuario-dashboard.component.html` | Bloco de mensagens com botões separados para admin e IA |
 | `usuario-dashboard.component.ts` | Controla estados de envio e formata horários em `America/Sao_Paulo` |
 | `usuario-dashboard.component.scss` | Estilos da bolha de resposta IA |
-| `application.properties` | Nova propriedade `anthropic.api.key` |
+| `application.properties` | Propriedade `anthropic.api.key` |
 
 [![My Skills](https://skillicons.dev/icons?i=java)](https://skillicons.dev)

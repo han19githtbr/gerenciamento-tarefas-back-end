@@ -510,13 +510,18 @@ public class TarefaService {
 					? tarefa.getPrazo().toString()
 					: "Nao definido";
 
+			String historicoConversa = montarHistoricoConversa(tarefa, mensagem.getId());
+			String equipeAlocada = montarEquipeAlocada(tarefa);
+
 			String respostaIA = anthropicService.gerarRespostaParaMensagem(
 					tarefa.getTitulo(),
 					tarefa.getDescricao(),
 					prazoStr,
 					departamento,
 					status,
-					texto);
+					texto,
+					historicoConversa,
+					equipeAlocada);
 
 			mensagem.setResposta(respostaIA);
 			mensagem.setAdminEmail("ia-assistente@sistema.com");
@@ -546,6 +551,43 @@ public class TarefaService {
 				"adminEmail", mensagem.getAdminEmail(),
 				"iaRespondida", mensagem.getResposta() != null && !mensagem.getResposta().isBlank());
 	}
+
+	/**
+	 * Monta um texto simples com as últimas mensagens já respondidas desta
+	 * tarefa (excluindo a mensagem recém-criada), para dar memória de
+	 * conversa ao assistente de IA (Feature 1). Limita às 5 trocas mais
+	 * recentes para não estourar o contexto do prompt.
+	 */
+	private String montarHistoricoConversa(Tarefa tarefa, Long idMensagemAtual) {
+		if (tarefa.getMensagens() == null || tarefa.getMensagens().isEmpty()) {
+			return "";
+		}
+
+		return tarefa.getMensagens().stream()
+				.filter(m -> m.isRespondida() && !Objects.equals(m.getId(), idMensagemAtual))
+				.sorted((a, b) -> a.getDataCriacao().compareTo(b.getDataCriacao()))
+				.skip(Math.max(0, tarefa.getMensagens().size() - 5))
+				.map(m -> "Colaborador: " + m.getTexto() + "\nAssistente: " + m.getResposta())
+				.collect(Collectors.joining("\n\n"));
+	}
+
+	/**
+	 * Monta a lista de nomes das pessoas atualmente alocadas na tarefa, para
+	 * que o assistente de IA (Feature 1) possa referenciar a equipe quando
+	 * relevante.
+	 */
+	private String montarEquipeAlocada(Tarefa tarefa) {
+		if (tarefa.getAlocacoes() == null || tarefa.getAlocacoes().isEmpty()) {
+			return "";
+		}
+
+		return tarefa.getAlocacoes().stream()
+				.filter(a -> a.getPessoa() != null)
+				.map(a -> a.getPessoa().getNome())
+				.filter(Objects::nonNull)
+				.collect(Collectors.joining(", "));
+	}
+
 	public Object responderMensagem(Long mensagemId, String adminEmail, String resposta) {
 		Mensagem mensagem = mensagemRepository.findById(mensagemId)
 				.orElseThrow(() -> new EntityNotFoundException("Mensagem n\u00e3o encontrada."));
